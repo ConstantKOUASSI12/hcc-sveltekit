@@ -1,53 +1,251 @@
-# HCC — Handball Club de Comines · Frontend
+# HCC Dashboard — SvelteKit + Flask
 
-SvelteKit + TypeScript + Tailwind CSS
+Application web de gestion pour le **Hockey Club de Chartres (HCC)**.  
+Interface d'administration permettant aux membres de suivre les matchs, les actualités et la gestion des adhérents.
 
-## Stack
-- **SvelteKit** — framework fullstack
-- **TypeScript** — typage statique
-- **Tailwind CSS** — styling utility-first
-- **Better Auth** — gestion de l'authentification
+---
 
-## Lancement
+## Description du projet
+
+Le projet est divisé en deux parties indépendantes :
+
+| Partie | Technologie | Rôle |
+|--------|------------|------|
+| **Front-end** | SvelteKit 2 + Svelte 5 | Interface utilisateur, authentification, tableau de bord |
+| **Back-end** | Flask 3 (REST API) | Source de vérité métier, gestion des adhérents, matchs, actualités |
+
+### API choisie — Flask REST
+
+L'API Flask a été développée from scratch dans le cadre du cours. Elle expose des endpoints REST organisés par domaine :
+
+- `/api/auth` — inscription, connexion, refresh token, déconnexion
+- `/api/adherents` — CRUD adhérents, validation de comptes, gestion des rôles
+- `/api/matchs` — CRUD matchs, inscription/désinscription d'un joueur
+- `/api/news` — CRUD actualités
+
+L'authentification repose sur **JWT** (Flask-JWT-Extended) avec un access token (1h) et un refresh token (2h).
+
+Le front-end SvelteKit utilise cette API comme **source de vérité** : à la connexion, il interroge Flask en premier, puis synchronise l'utilisateur dans sa propre base via **Better Auth**.
+
+---
+
+## Stack technique
+
+**Front-end**
+- [SvelteKit 2](https://kit.svelte.dev) + [Svelte 5](https://svelte.dev) (runes)
+- TypeScript
+- TailwindCSS 3
+- Better Auth — gestion des sessions côté SvelteKit
+- Prisma 7 + PostgreSQL (Neon) — base de données SvelteKit
+- `@prisma/adapter-pg` — driver PostgreSQL pour Prisma 7
+
+**Back-end**
+- Flask 3 + Flask-SQLAlchemy
+- Flask-JWT-Extended
+- Flask-Marshmallow — sérialisation/validation
+- Flask-Bcrypt — hashage des mots de passe
+- PostgreSQL (Neon) — base de données Flask
+- Gunicorn — serveur de production
+- Docker — conteneurisation
+
+**Déploiement**
+- Front-end → [Vercel](https://vercel.com)
+- Back-end → [Render](https://render.com) (Docker)
+- Bases de données → [Neon](https://neon.tech) (PostgreSQL serverless)
+
+---
+
+## Lancer le projet en local
+
+### Prérequis
+
+- Node.js 20+
+- Python 3.12+
+- Docker & Docker Compose
+
+### 1. Back-end Flask
 
 ```bash
+cd hcc-flask-render
+
+# Copier le fichier d'environnement
+cp .env.example .env.production
+# Renseigner DATABASE_URL, JWT_SECRET_KEY, FLASK_ENV=development
+
+# Lancer avec Docker Compose
+docker compose up --build
+
+# L'API est disponible sur http://localhost:5000
+```
+
+Pour initialiser la base (première fois uniquement) :
+
+```bash
+# Ajouter INIT_DB=true dans .env.production, relancer, puis le retirer
+```
+
+### 2. Front-end SvelteKit
+
+```bash
+cd hcc-sveltekit-v2
+
 npm install
+```
+
+Créer un fichier `.env` :
+
+```env
+PUBLIC_API_URL=http://localhost:5000
+BETTER_AUTH_URL=http://localhost:5173
+BETTER_AUTH_SECRET=une-cle-secrete-longue
+JWT_SECRET=une-cle-jwt
+DATABASE_URL=postgresql://user:pass@host/dbname?sslmode=require
+```
+
+```bash
+# Créer les tables
+npx prisma migrate dev --name "init"
+
+# Lancer le serveur de développement
 npm run dev
 # → http://localhost:5173
 ```
 
-## Variables d'environnement
+### Comptes de test
 
-```bash
-# .env
-PUBLIC_API_URL=http://localhost:5000   # URL de ton API Flask
-BETTER_AUTH_SECRET=your-secret
-BETTER_AUTH_URL=http://localhost:5173
+```
+admin@hcc.com    / Admin@123456
+coach@hcc.com    / Coach@123456
+player@hcc.com   / Player@123456
+contrib@hcc.com  / Contrib@123456
 ```
 
-## Structure
+---
+
+## Structure des fichiers
+
+### Front-end (`src/`)
 
 ```
 src/
+├── hooks.server.ts              # Middleware global : session, redirections auth
+├── app.d.ts                     # Types globaux (locals.user, locals.session)
+│
 ├── lib/
-│   ├── api/          ← client HTTP + endpoints
-│   ├── components/   ← composants réutilisables
-│   ├── stores/       ← état global (auth)
-│   └── types/        ← interfaces TypeScript
+│   ├── api/
+│   │   ├── client.ts            # Client HTTP vers Flask (gestion JWT, retry 401)
+│   │   └── index.ts             # API par domaine : adherentsApi, matchsApi, newsApi
+│   ├── server/
+│   │   ├── auth.ts              # Configuration Better Auth
+│   │   └── prisma.ts            # Instance Prisma avec adapter PostgreSQL
+│   ├── components/
+│   │   ├── dashboard/
+│   │   │   └── StatCard.svelte  # Carte de statistique réutilisable
+│   │   └── layout/
+│   │       ├── Sidebar.svelte   # Navigation latérale
+│   │       └── Topbar.svelte    # Barre supérieure
+│   ├── stores/
+│   │   └── sidebar.ts           # État ouvert/fermé de la sidebar
+│   └── types/
+│       └── index.ts             # Types TypeScript partagés
+│
 └── routes/
+    ├── +page.svelte             # Page d'accueil → redirige vers /dashboard
     ├── auth/
-    │   ├── login/    ← page de connexion
-    │   └── register/ ← page d'inscription
-    └── dashboard/
-        ├── +page.svelte       ← vue d'ensemble
-        ├── adherents/         ← liste adhérents (admin/coach)
-        ├── pending/           ← validation adhérents (admin)
-        ├── matchs/            ← liste + détail matchs
-        ├── news/              ← actualités
-        └── profile/           ← profil personnel
+    │   ├── login/               # Connexion (Flask + Better Auth)
+    │   └── register/            # Inscription
+    ├── dashboard/
+    │   ├── +layout.svelte       # Layout commun (Sidebar + contenu)
+    │   ├── +layout.server.ts    # Charge user/session dans les pages filles
+    │   ├── +page.svelte         # Vue d'ensemble (stats, matchs récents, actualités)
+    │   ├── adherents/
+    │   │   ├── +page.svelte     # Liste des adhérents
+    │   │   └── [id]/            # Détail d'un adhérent
+    │   ├── matchs/
+    │   │   ├── +page.svelte     # Liste + création de matchs
+    │   │   └── [id]/            # Détail d'un match + inscription
+    │   ├── news/
+    │   │   ├── +page.svelte     # Liste + création d'actualités
+    │   │   └── [id]/            # Détail d'une actualité
+    │   ├── pending/             # Adhérents en attente de validation (admin)
+    │   └── profile/             # Profil utilisateur connecté
+    └── api/
+        ├── auth/[...all]/       # Proxy Better Auth
+        ├── session/token/       # Endpoint SvelteKit → renvoie le token Flask
+        └── admin/sync-user/     # Synchronisation rôle Flask → Neon
 ```
 
-## Routes par rôle
+### Back-end (`app/`)
+
+```
+app/
+├── app.py                 # Factory Flask (create_app), CORS, blueprints
+├── config.py              # Config dev/prod (DATABASE_URL, JWT_SECRET_KEY)
+├── extensions.py          # Instances partagées : db, jwt, ma, bcrypt
+├── seeder.py              # Données initiales : rôles, admin par défaut
+├── requirements.txt       # Dépendances Python
+│
+└── api/
+    ├── auth/
+    │   ├── routes.py      # POST /register, /login, /refresh, /logout
+    │   └── services.py    # Logique métier auth
+    ├── adherents/
+    │   ├── models.py      # Adherent, Role, Permission (SQLAlchemy)
+    │   ├── routes.py      # GET/PUT adherents, PATCH validate
+    │   ├── services.py    # Logique métier adhérents
+    │   └── schemas.py     # Marshmallow : validation + sérialisation
+    ├── matchs/
+    │   ├── models.py      # Match, Registration
+    │   ├── routes.py      # CRUD matchs, POST subscription, DELETE unsubscribe
+    │   ├── services.py
+    │   └── schemas.py
+    └── news/
+        ├── models.py      # News
+        ├── routes.py      # CRUD actualités
+        ├── services.py
+        └── schemas.py
+```
+
+---
+
+## Fonctionnalités implémentées
+
+### Authentification
+- [x] Connexion via Flask (source de vérité) avec synchronisation automatique dans Better Auth
+- [x] Connexion Better Auth seul (pour les comptes créés directement dans SvelteKit)
+- [x] Protection des routes par middleware (`hooks.server.ts`)
+- [x] Redirection automatique : connecté → dashboard, non connecté → login
+- [x] Gestion des tokens Flask (access + refresh) avec retry automatique sur 401
+- [x] Blocage des comptes en attente de validation (`role === 'pending'`)
+
+### Adhérents
+- [x] Liste de tous les adhérents (admin/coach)
+- [x] Détail d'un adhérent
+- [x] Liste des comptes en attente de validation
+- [x] Validation d'un adhérent avec attribution de rôle (admin uniquement)
+- [x] Inscription d'un nouvel adhérent
+
+### Matchs
+- [x] Liste de tous les matchs de la saison
+- [x] Détail d'un match (lieu, date, commentaire, score)
+- [x] Création d'un match (coach/admin)
+- [x] Modification d'un match (coach/admin)
+- [x] Inscription / désinscription d'un joueur à un match
+
+### Actualités
+- [x] Liste des actualités
+- [x] Détail d'une actualité
+- [x] Création d'une actualité (coach/admin/contributor)
+- [x] Suppression d'une actualité (auteur ou admin)
+
+### Interface
+- [x] Dashboard avec statistiques (adhérents, matchs, actualités, comptes en attente)
+- [x] Prochain match mis en avant sur le dashboard
+- [x] Sidebar responsive avec navigation par rôle
+- [x] Squelettes de chargement (skeleton screens)
+- [x] Système de rôles : `admin`, `coach`, `player`, `contributor`, `pending`
+
+### Routes par rôle
 
 | Route | Admin | Coach | Player | Contributor |
 |-------|-------|-------|--------|-------------|
@@ -58,18 +256,96 @@ src/
 | /dashboard/news | ✅ | ✅ | ✅ | ✅ |
 | /dashboard/profile | ✅ | ✅ | ✅ | ✅ |
 
-## Comptes de test
+---
 
-```
-admin@hcc.com    / Admin@123456
-coach@hcc.com    / Coach@123456
-player@hcc.com   / Player@123456
-contrib@hcc.com  / Contrib@123456
-```
+## Fonctionnalités manquantes
 
-## Docker
+- [ ] **Réinitialisation du mot de passe** — aucun flux "mot de passe oublié" n'est implémenté
+- [ ] **Vérification d'email** — les comptes sont créés sans confirmation par email
+- [ ] **Upload d'image** — pas de photo de profil ni d'image pour les actualités
+- [ ] **Graphiques** — Chart.js est installé mais les graphiques ne sont pas implémentés
+- [ ] **Notifications en temps réel** — les mises à jour nécessitent un rechargement manuel
+- [ ] **Saisie du score** — le champ `score` existe en base mais l'interface de saisie manque
+- [ ] **Pagination** — toutes les listes chargent l'intégralité des données
+- [ ] **Tests** — aucun test unitaire ou d'intégration n'a été écrit
 
-```bash
-# Avec ton API Flask
-docker compose up -d
+---
+
+## Difficultés rencontrées et solutions
+
+### 1. Double système d'authentification (Flask + Better Auth)
+
+**Problème** : Flask est la source de vérité des utilisateurs, mais SvelteKit a besoin de ses propres sessions (cookies, `locals.user`) pour protéger les routes côté serveur.
+
+**Solution** : À la connexion, le front interroge Flask en premier. Si Flask valide, on fait un `upsert` dans Better Auth (création au premier login, mise à jour sinon). Les tokens Flask sont stockés dans la table `user` de Neon et renvoyés au client via un endpoint SvelteKit dédié (`/api/session/token`). En cas d'expiration (401), le client refait un refresh automatiquement avant de rejouer la requête.
+
+---
+
+### 2. Migration SQLite → PostgreSQL (Prisma 7)
+
+**Problème** : Vercel n'a pas de système de fichiers persistant — SQLite est incompatible avec un déploiement serverless. De plus, Prisma 7 a supprimé le champ `url` dans `schema.prisma` (breaking change par rapport à Prisma 6).
+
+**Solution** :
+- Suppression de `url = env("DATABASE_URL")` dans le bloc `datasource db`
+- Déplacement de l'URL de connexion dans `prisma.config.ts`
+- Remplacement de `@prisma/adapter-better-sqlite3` par `@prisma/adapter-pg`
+- Suppression du dossier `prisma/migrations/` (historique SQLite incompatible avec PostgreSQL) et re-migration depuis zéro avec `prisma migrate dev --name "init"`
+
+---
+
+### 3. Variables d'environnement publiques sur Vercel
+
+**Problème** : Le client API utilisait `import.meta.env.PUBLIC_API_URL` qui n'était pas résolu correctement par Vercel → fallback systématique sur `localhost:5000` en production.
+
+**Solution** : Remplacement par l'import SvelteKit officiel :
+```typescript
+// Avant
+const BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:5000';
+
+// Après
+import { PUBLIC_API_URL } from '$env/static/public';
+const BASE = PUBLIC_API_URL;
 ```
+`$env/static/public` est injecté au moment du build par le plugin Vite de SvelteKit, ce qui garantit la bonne valeur en production.
+
+---
+
+### 4. Connexion à la base de données Flask sur Render
+
+**Problème** : La variable `DATABASE_URL` du service Flask utilisait l'URL **interne** Render (`dpg-xxx-a`) qui ne se résout pas depuis un container Docker — erreur `Name or service not known`.
+
+**Solution** : Utilisation de l'**External URL** de Neon (hostname complet `ep-xxx.eu-west-2.aws.neon.tech`) qui fonctionne depuis n'importe quel environnement, y compris Docker sur Render.
+
+---
+
+### 5. Migration Svelte 4 → Svelte 5 (runes)
+
+**Problème** : Tout le code réactif a dû être réécrit — la syntaxe Svelte 4 n'est pas compatible avec Svelte 5 en mode runes.
+
+**Solution** : Migration complète du projet. Principaux changements appliqués :
+
+| Svelte 4 | Svelte 5 |
+|----------|----------|
+| `export let x` | `let { x } = $props()` |
+| `let x = 0` | `let x = $state(0)` |
+| `$: y = x * 2` | `let y = $derived(x * 2)` |
+| `on:click={fn}` | `onclick={fn}` |
+| `<slot />` | `{@render children?.()}` |
+
+---
+
+## Déploiement
+
+| Service | URL |
+|---------|-----|
+| Front-end | https://hcc-sveltekit.vercel.app |
+| Back-end | https://hcc-flask.onrender.com |
+
+> **Note** : Le back-end est hébergé sur Render en plan gratuit. Il peut mettre jusqu'à 60 secondes à répondre après une période d'inactivité (cold start).
+
+---
+
+## Auteur
+
+Constant KOUASSI  
+Projet réalisé dans le cadre du cours **Développement API**
