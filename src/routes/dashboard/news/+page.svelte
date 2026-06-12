@@ -91,12 +91,12 @@
       <h3 class="section-title mb-4">Nouvelle actualité</h3>
       <div class="space-y-4">
         <div>
-          <label class="label">Titre</label>
-          <input type="text" class="input" placeholder="Titre de l'actualité" bind:value={form.title}/>
+          <label class="label" for="news-title">Titre</label>
+          <input id="news-title" type="text" class="input" placeholder="Titre de l'actualité" bind:value={form.title}/>
         </div>
         <div>
-          <label class="label">Contenu</label>
-          <textarea class="input resize-none h-36" placeholder="Rédigez votre actualité..."
+          <label class="label" for="news-content">Contenu</label>
+          <textarea id="news-content" class="input resize-none h-36" placeholder="Rédigez votre actualité..."
                     bind:value={form.content}></textarea>
         </div>
       </div>
@@ -128,7 +128,7 @@
               {article.title}
             </a>
             {#if isAdmin || article.author?.id === userId}
-              <button onclick={() => deleteNews(article.id)}
+              <button onclick={() => deleteNews(article.id)} aria-label="Supprimer l'article"
                       class="text-gray-300 hover:text-red-500 transition-colors flex-shrink-0 p-1">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
