@@ -1,0 +1,47 @@
+{
+	"/": [],
+	"/api/admin/sync-user": [
+		"src/routes/api/admin/sync-user/+server.ts"
+	],
+	"/api/auth/[...all]": [
+		"src/routes/api/auth/[...all]/+server.ts"
+	],
+	"/api/session/token": [
+		"src/routes/api/session/token/+server.ts"
+	],
+	"/auth/login": [
+		"src/routes/auth/login/+page.server.ts"
+	],
+	"/auth/register": [
+		"src/routes/auth/register/+page.server.ts"
+	],
+	"/dashboard": [
+		"src/routes/dashboard/+layout.server.ts",
+		"src/routes/dashboard/+layout.server.ts"
+	],
+	"/dashboard/adherents": [
+		"src/routes/dashboard/+layout.server.ts"
+	],
+	"/dashboard/adherents/[id]": [
+		"src/routes/dashboard/+layout.server.ts"
+	],
+	"/dashboard/matchs": [
+		"src/routes/dashboard/+layout.server.ts"
+	],
+	"/dashboard/matchs/[id]": [
+		"src/routes/dashboard/+layout.server.ts"
+	],
+	"/dashboard/news": [
+		"src/routes/dashboard/+layout.server.ts"
+	],
+	"/dashboard/news/[id]": [
+		"src/routes/dashboard/+layout.server.ts"
+	],
+	"/dashboard/pending": [
+		"src/routes/dashboard/pending/+page.server.ts",
+		"src/routes/dashboard/+layout.server.ts"
+	],
+	"/dashboard/profile": [
+		"src/routes/dashboard/+layout.server.ts"
+	]
+}
