@@ -1,4 +1,5 @@
-const BASE = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:5000';
+import { PUBLIC_API_URL } from '$env/static/public';
+const BASE = PUBLIC_API_URL;
 
 async function getFlaskToken(forceRefresh = false): Promise<string | null> {
   try {
