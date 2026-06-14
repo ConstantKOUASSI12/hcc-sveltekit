@@ -34,7 +34,7 @@ Le front-end SvelteKit utilise cette API comme **source de vérité** : à la co
 **Front-end**
 - [SvelteKit 2](https://kit.svelte.dev) + [Svelte 5](https://svelte.dev) (runes)
 - TypeScript
-- TailwindCSS 3
+- TailwindCSS 4
 - Better Auth — gestion des sessions côté SvelteKit
 - Prisma 7 + PostgreSQL (Neon) — base de données SvelteKit
 - `@prisma/adapter-pg` — driver PostgreSQL pour Prisma 7
@@ -59,7 +59,7 @@ Le front-end SvelteKit utilise cette API comme **source de vérité** : à la co
 
 ### Prérequis
 
-- Node.js 20+
+- Node.js 24+
 - Python 3.12+
 - Docker & Docker Compose
 
@@ -114,10 +114,7 @@ npm run dev
 ### Comptes de test
 
 ```
-admin@hcc.com    / Admin@123456
-coach@hcc.com    / Coach@123456
-player@hcc.com   / Player@123456
-contrib@hcc.com  / Contrib@123456
+kouassiconstant94@gmail.com    / 1234567890
 ```
 
 ---
@@ -315,22 +312,6 @@ const BASE = PUBLIC_API_URL;
 **Problème** : La variable `DATABASE_URL` du service Flask utilisait l'URL **interne** Render (`dpg-xxx-a`) qui ne se résout pas depuis un container Docker — erreur `Name or service not known`.
 
 **Solution** : Utilisation de l'**External URL** de Neon (hostname complet `ep-xxx.eu-west-2.aws.neon.tech`) qui fonctionne depuis n'importe quel environnement, y compris Docker sur Render.
-
----
-
-### 5. Migration Svelte 4 → Svelte 5 (runes)
-
-**Problème** : Tout le code réactif a dû être réécrit — la syntaxe Svelte 4 n'est pas compatible avec Svelte 5 en mode runes.
-
-**Solution** : Migration complète du projet. Principaux changements appliqués :
-
-| Svelte 4 | Svelte 5 |
-|----------|----------|
-| `export let x` | `let { x } = $props()` |
-| `let x = 0` | `let x = $state(0)` |
-| `$: y = x * 2` | `let y = $derived(x * 2)` |
-| `on:click={fn}` | `onclick={fn}` |
-| `<slot />` | `{@render children?.()}` |
 
 ---
 

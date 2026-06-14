@@ -3,4 +3,4 @@ node_modules
 .env
 
 /../generated/prisma
-GUIDE_SVELTE.md
+GUIDE_SVELTE5.md
