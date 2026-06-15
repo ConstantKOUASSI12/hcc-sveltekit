@@ -1,7 +1,6 @@
 <!-- src/routes/dashboard/matchs/[id]/+page.svelte -->
 <script lang="ts">
   import { page } from '$app/stores';
-  import { onMount } from 'svelte';
   import { useSession } from '$lib/auth-client';
   import { matchsApi } from '$lib/api';
   import Topbar from '$lib/components/layout/Topbar.svelte';
@@ -19,32 +18,22 @@
   let isPlayer = $derived(role === 'player');
   let userId   = $derived(u?.flask_adherent_id ?? null);
 
-  let match   = $state<Match | null>(null);
-  let loading = $state(true);
+  let match   = $state<Match | null>(data.match ?? null);
   let editing = $state(false);
   let saving  = $state(false);
   let error   = $state('');
   let success = $state('');
 
-  let editForm = $state({ score: '', comment: '', is_finished: false });
+  let editForm = $state({
+    score:       data.match?.score       ?? '',
+    comment:     data.match?.comment     ?? '',
+    is_finished: data.match?.is_finished ?? false,
+  });
 
   let matchId      = $derived(parseInt($page.params.id!));
   let isSubscribed = $derived(
     match?.played_matches?.some(r => r.adherent?.id === userId) ?? false
   );
-
-  onMount(async () => {
-    const res = await matchsApi.getOne(matchId);
-    if (res.data) {
-      match = res.data;
-      editForm = {
-        score:       match.score ?? '',
-        comment:     match.comment ?? '',
-        is_finished: match.is_finished,
-      };
-    }
-    loading = false;
-  });
 
   async function saveMatch() {
     if (!match) return;
@@ -100,13 +89,7 @@
 </Topbar>
 
 <div class="p-4 md:p-8 animate-fade">
-  {#if loading}
-    <div class="space-y-4">
-      {#each Array(4) as _}
-        <div class="h-24 bg-gray-100 rounded-2xl animate-pulse"></div>
-      {/each}
-    </div>
-  {:else if !match}
+  {#if !match}
     <div class="card text-center py-16">
       <p class="text-gray-400">Match introuvable</p>
     </div>

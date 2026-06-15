@@ -1,13 +1,13 @@
 <!-- src/routes/dashboard/pending/+page.svelte -->
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { adherentsApi } from '$lib/api';
   import Topbar from '$lib/components/layout/Topbar.svelte';
   import type { Adherent } from '$lib/types';
+  import type { PageData } from './$types';
 
-  let pending  = $state<Adherent[]>([]);
-  let loading  = $state(true);
-  let selected = $state<Record<number, number>>({});
+  let { data }: { data: PageData } = $props();
+
+  let pending = $state<Adherent[]>(data.pending);
   let saving   = $state<Record<number, boolean>>({});
   let success  = $state('');
   let error    = $state('');
@@ -18,14 +18,9 @@
     { id: 4, name: 'player' },
   ];
 
-  onMount(async () => {
-    const res = await adherentsApi.getPending();
-    if (res.data) {
-      pending = res.data;
-      pending.forEach(a => { selected[a.id] = availableRoles[2].id; });
-    }
-    loading = false;
-  });
+  let selected = $state<Record<number, number>>(
+    Object.fromEntries(data.pending.map(a => [a.id, availableRoles[2].id]))
+  );
 
   async function validateAdherent(adherent: Adherent) {
     const roleId = selected[adherent.id];
@@ -89,11 +84,7 @@
     <div class="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm">{error}</div>
   {/if}
 
-  {#if loading}
-    {#each Array(3) as _}
-      <div class="h-24 bg-gray-100 rounded-2xl animate-pulse"></div>
-    {/each}
-  {:else if pending.length === 0}
+  {#if pending.length === 0}
     <div class="card text-center py-16">
       <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

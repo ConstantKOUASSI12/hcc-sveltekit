@@ -1,7 +1,5 @@
 <!-- src/routes/dashboard/news/[id]/+page.svelte -->
 <script lang="ts">
-  import { page } from '$app/stores';
-  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { newsApi } from '$lib/api';
   import { useSession } from '$lib/auth-client';
@@ -17,17 +15,8 @@
   let isAdmin = $derived(u?.role === 'admin');
   let userId  = $derived(u?.flask_adherent_id ?? null);
 
-  let article = $state<News | null>(null);
-  let loading = $state(true);
-
-  let newsId     = $derived(parseInt($page.params.id!));
-  let canDelete  = $derived(isAdmin || article?.author?.id === userId);
-
-  onMount(async () => {
-    const res = await newsApi.getOne(newsId);
-    if (res.data) article = res.data;
-    loading = false;
-  });
+  let article   = $state<News | null>(data.article ?? null);
+  let canDelete = $derived(isAdmin || article?.author?.id === userId);
 
   async function handleDelete() {
     if (!article || !confirm('Supprimer cette actualité ?')) return;
@@ -50,13 +39,7 @@
 </Topbar>
 
 <div class="p-4 md:p-8 max-w-3xl animate-fade">
-  {#if loading}
-    <div class="space-y-4">
-      <div class="h-8 bg-gray-100 rounded-xl w-3/4 animate-pulse"></div>
-      <div class="h-4 bg-gray-100 rounded w-1/3 animate-pulse"></div>
-      <div class="h-64 bg-gray-100 rounded-2xl animate-pulse"></div>
-    </div>
-  {:else if !article}
+  {#if !article}
     <div class="card text-center py-16">
       <p class="text-gray-400">Actualité introuvable</p>
     </div>

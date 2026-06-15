@@ -1,11 +1,9 @@
 <!-- src/routes/dashboard/+page.svelte -->
 <script lang="ts">
-  import { onMount } from 'svelte';
   import Topbar from '$lib/components/layout/Topbar.svelte';
   import StatCard from '$lib/components/dashboard/StatCard.svelte';
   import type { Match, News, Adherent } from '$lib/types';
   import { useSession } from '$lib/auth-client';
-  import { adherentsApi, matchsApi, newsApi } from '$lib/api';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -17,11 +15,10 @@
   let isAdmin     = $derived(role === 'admin');
   let isCoach     = $derived(role === 'coach');
 
-  let matchs    = $state<Match[]>([]);
-  let news      = $state<News[]>([]);
-  let adherents = $state<Adherent[]>([]);
-  let pending   = $state<Adherent[]>([]);
-  let loading   = $state(true);
+  let matchs    = $state<Match[]>(data.matchs);
+  let news      = $state<News[]>(data.news);
+  let adherents = $state<Adherent[]>(data.adherents);
+  let pending   = $derived(adherents.filter(a => a.role === 'pending'));
 
   const icons = {
     users:   `<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>`,
@@ -29,27 +26,6 @@
     news:    `<path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>`,
     pending: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>`,
   };
-
-  onMount(async () => {
-    try {
-      const [mRes, nRes] = await Promise.all([
-        matchsApi.getAll(),
-        newsApi.getAll(),
-      ]);
-      if (mRes.data) matchs = mRes.data;
-      if (nRes.data) news   = nRes.data;
-
-      if (isAdmin || isCoach) {
-        const [aRes] = await Promise.all([
-          adherentsApi.getAll(),
-        ]);
-        if (aRes.data) adherents = aRes.data;
-        if (aRes.data) pending = aRes.data?.filter(m => m.role === 'pending') ?? [];
-      }
-    } finally {
-      loading = false;
-    }
-  });
 
   let nextMatch = $derived(
     matchs
@@ -135,11 +111,7 @@
         </a>
       </div>
 
-      {#if loading}
-        {#each Array(3) as _}
-          <div class="h-12 bg-gray-100 rounded-xl mb-2 animate-pulse"></div>
-        {/each}
-      {:else if recentMatchs.length === 0}
+      {#if recentMatchs.length === 0}
         <p class="text-gray-400 text-sm text-center py-8">Aucun match enregistré</p>
       {:else}
         <div class="space-y-2">
@@ -187,11 +159,7 @@
         </a>
       </div>
 
-      {#if loading}
-        {#each Array(3) as _}
-          <div class="h-16 bg-gray-100 rounded-xl mb-2 animate-pulse"></div>
-        {/each}
-      {:else if recentNews.length === 0}
+      {#if recentNews.length === 0}
         <p class="text-gray-400 text-sm text-center py-8">Aucune actualité</p>
       {:else}
         <div class="space-y-3">

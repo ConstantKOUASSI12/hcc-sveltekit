@@ -16,25 +16,32 @@
 		"src/routes/auth/register/+page.server.ts"
 	],
 	"/dashboard": [
+		"src/routes/dashboard/+page.server.ts",
 		"src/routes/dashboard/+layout.server.ts",
 		"src/routes/dashboard/+layout.server.ts"
 	],
 	"/dashboard/adherents": [
+		"src/routes/dashboard/adherents/+page.server.ts",
 		"src/routes/dashboard/+layout.server.ts"
 	],
 	"/dashboard/adherents/[id]": [
+		"src/routes/dashboard/adherents/[id]/+page.server.ts",
 		"src/routes/dashboard/+layout.server.ts"
 	],
 	"/dashboard/matchs": [
+		"src/routes/dashboard/matchs/+page.server.ts",
 		"src/routes/dashboard/+layout.server.ts"
 	],
 	"/dashboard/matchs/[id]": [
+		"src/routes/dashboard/matchs/[id]/+page.server.ts",
 		"src/routes/dashboard/+layout.server.ts"
 	],
 	"/dashboard/news": [
+		"src/routes/dashboard/news/+page.server.ts",
 		"src/routes/dashboard/+layout.server.ts"
 	],
 	"/dashboard/news/[id]": [
+		"src/routes/dashboard/news/[id]/+page.server.ts",
 		"src/routes/dashboard/+layout.server.ts"
 	],
 	"/dashboard/pending": [
@@ -42,6 +49,7 @@
 		"src/routes/dashboard/+layout.server.ts"
 	],
 	"/dashboard/profile": [
+		"src/routes/dashboard/profile/+page.server.ts",
 		"src/routes/dashboard/+layout.server.ts"
 	]
 }

@@ -2,6 +2,7 @@
 import { betterAuth } from 'better-auth';
 import { BETTER_AUTH_SECRET, BETTER_AUTH_URL } from '$env/static/private';
 import { PUBLIC_API_URL } from '$env/static/public';
+import { env } from '$env/dynamic/private';
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "$lib/server/prisma";
 
@@ -9,7 +10,7 @@ export const auth = betterAuth({
   baseURL: BETTER_AUTH_URL,
   secret: BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, {
-    provider: "postgresql",
+    provider: ((env.DATABASE_PROVIDER ?? 'postgresql') as 'sqlite' | 'postgresql'),
   }),
 
   emailAndPassword: {

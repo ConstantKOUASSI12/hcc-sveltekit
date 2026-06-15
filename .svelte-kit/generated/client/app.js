@@ -24,15 +24,15 @@ export const dictionary = {
 		"/": [3],
 		"/auth/login": [~4],
 		"/auth/register": [~5],
-		"/dashboard": [6,[2]],
-		"/dashboard/adherents": [7,[2]],
-		"/dashboard/adherents/[id]": [8,[2]],
-		"/dashboard/matchs": [9,[2]],
-		"/dashboard/matchs/[id]": [10,[2]],
-		"/dashboard/news": [11,[2]],
-		"/dashboard/news/[id]": [12,[2]],
+		"/dashboard": [~6,[2]],
+		"/dashboard/adherents": [~7,[2]],
+		"/dashboard/adherents/[id]": [~8,[2]],
+		"/dashboard/matchs": [~9,[2]],
+		"/dashboard/matchs/[id]": [~10,[2]],
+		"/dashboard/news": [~11,[2]],
+		"/dashboard/news/[id]": [~12,[2]],
 		"/dashboard/pending": [~13,[2]],
-		"/dashboard/profile": [14,[2]]
+		"/dashboard/profile": [~14,[2]]
 	};
 
 export const hooks = {

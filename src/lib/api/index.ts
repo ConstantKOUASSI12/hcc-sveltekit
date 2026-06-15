@@ -14,13 +14,9 @@ export const authApi = {
 
 // ── Adhérents ─────────────────────────────────────────────
 export const adherentsApi = {
-  getAll:    ()                                  => api.get<Adherent[]>('/api/adherents/'),
-  getOne:    (id: number)                        => api.get<Adherent>(`/api/adherents/${id}`),
-  getMe:     ()                                  => api.get<Adherent>('/api/adherents/me'),
-  getPending:()                                  => api.get<Adherent[]>('/api/adherents/pending'),
-  update:    (id: number, data: Pick<Adherent, 'first_name' | 'last_name' | 'email' | 'contact'>) =>
+  update:   (id: number, data: Pick<Adherent, 'first_name' | 'last_name' | 'email' | 'contact'>) =>
     api.put<Adherent>(`/api/adherents/${id}`, data),
-  validate:  (adherent_id: number, role_id: number) =>
+  validate: (adherent_id: number, role_id: number) =>
     api.patch<Adherent>('/api/adherents/validate', { adherent_id, role_id }),
 };
 
@@ -36,9 +32,6 @@ export const matchsApi = {
 
 // ── News ──────────────────────────────────────────────────
 export const newsApi = {
-  getAll:  ()                                  => api.get<News[]>('/api/news/'),
-  getOne:  (id: number)                        => api.get<News>(`/api/news/${id}`),
-  create:  (d: { title: string; content: string }) => api.post<News>('/api/news/', d),
-  update:  (id: number, d: Partial<News>)      => api.put<News>(`/api/news/${id}`, d),
-  delete:  (id: number)                        => api.delete(`/api/news/${id}`),
+  create: (d: { title: string; content: string }) => api.post<News>('/api/news/', d),
+  delete: (id: number)                            => api.delete(`/api/news/${id}`),
 };

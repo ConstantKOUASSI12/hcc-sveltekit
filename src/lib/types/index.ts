@@ -9,11 +9,6 @@ export interface ApiResponse<T> {
   errors?: Record<string, string[]>;
 }
 
-export interface RoleInfo {
-  id:   number;
-  name: Role;
-}
-
 export interface Adherent {
   id:               number;
   first_name:       string;
@@ -27,28 +22,6 @@ export interface Adherent {
   registrations?:   Registration[];
   mes_actualites?:  News[];
   mes_matchs?:      Match[];
-}
-
-
-export interface TokenInfo {
-  token:      string;
-  expires_at: string;
-}
-
-export interface Tokens {
-  access:  TokenInfo;
-  refresh: TokenInfo;
-}
-
-// data retourné par POST /api/auth/login
-export interface LoginResponseData {
-  tokens: Tokens;
-}
-
-// Session locale : tokens + profil adherent (chargé via /me)
-export interface Session {
-  adherent: Adherent;
-  tokens:   Tokens;
 }
 
 export interface Match {
@@ -80,11 +53,4 @@ export interface News {
   author:       Partial<Adherent>;
 }
 
-export interface DashboardStats {
-  total_adherents:   number;
-  pending_adherents: number;
-  total_matchs:      number;
-  next_match:        Match | null;
-  total_news:        number;
-}
 

@@ -1,8 +1,6 @@
 <!-- src/routes/dashboard/adherents/[id]/+page.svelte -->
 <script lang="ts">
   import { page } from '$app/stores';
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
   import { adherentsApi } from '$lib/api';
   import { useSession } from '$lib/auth-client';
   import Topbar from '$lib/components/layout/Topbar.svelte';
@@ -18,8 +16,7 @@
   let isAdmin = $derived(role === 'admin');
   let userId  = $derived(u?.flask_adherent_id ?? null);
 
-  let adherent      = $state<Adherent | null>(null);
-  let loading       = $state(true);
+  let adherent      = $state<Adherent | null>(data.adherent ?? null);
   let saving        = $state(false);
   let error         = $state('');
   let success       = $state('');
@@ -27,10 +24,10 @@
   let savingRole    = $state(false);
 
   let form = $state({
-    first_name: '',
-    last_name:  '',
-    email:      '',
-    contact:    '',
+    first_name: data.adherent?.first_name ?? '',
+    last_name:  data.adherent?.last_name  ?? '',
+    email:      data.adherent?.email      ?? '',
+    contact:    data.adherent?.contact    ?? '',
   });
 
   let adherentId = $derived(parseInt($page.params.id!));
@@ -41,7 +38,9 @@
     { id: 4, name: 'player' },
   ];
 
-  let selectedRoleId = $state<number | null>(null);
+  let selectedRoleId = $state<number | null>(
+    availableRoles.find(r => r.name === data.adherent?.role)?.id ?? null
+  );
 
   const badgeClass: Record<string, string> = {
     admin:       'badge-admin',
@@ -50,21 +49,6 @@
     contributor: 'badge-contributor',
     pending:     'badge-pending',
   };
-
-  onMount(async () => {
-    const res = await adherentsApi.getOne(adherentId);
-    if (res.data) {
-      adherent = res.data;
-      form = {
-        first_name: adherent.first_name,
-        last_name:  adherent.last_name,
-        email:      adherent.email,
-        contact:    adherent.contact,
-      };
-      selectedRoleId = availableRoles.find(r => r.name === adherent?.role)?.id ?? null;
-    }
-    loading = false;
-  });
 
   async function saveInfo() {
     if (!form.first_name || !form.last_name || !form.email || !form.contact) {
@@ -139,14 +123,7 @@
     </div>
   {/if}
 
-  {#if loading}
-    <div class="space-y-4">
-      {#each Array(3) as _}
-        <div class="h-24 bg-gray-100 rounded-2xl animate-pulse"></div>
-      {/each}
-    </div>
-
-  {:else if !adherent}
+  {#if !adherent}
     <div class="card text-center py-16">
       <p class="text-gray-400">Adhérent introuvable.</p>
     </div>

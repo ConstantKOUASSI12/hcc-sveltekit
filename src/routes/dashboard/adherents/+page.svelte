@@ -1,15 +1,12 @@
 <!-- src/routes/dashboard/adherents/+page.svelte -->
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { adherentsApi } from '$lib/api';
-  import { useSession } from '$lib/auth-client';
   import Topbar from '$lib/components/layout/Topbar.svelte';
   import type { Adherent } from '$lib/types';
+  import type { PageData } from './$types';
 
-  const session = useSession();
+  let { data }: { data: PageData } = $props();
 
-  let adherents = $state<Adherent[]>([]);
-  let loading    = $state(true);
+  let adherents = $state<Adherent[]>(data.adherents);
   let search     = $state('');
   let roleFilter = $state('all');
 
@@ -23,12 +20,6 @@
     player: 'badge-player', contributor: 'badge-contributor',
     pending: 'badge-pending'
   };
-
-  onMount(async () => {
-    const res = await adherentsApi.getAll();
-    if (res.data) adherents = res.data;
-    loading = false;
-  });
 
   let filtered = $derived(
     adherents.filter(a => {
@@ -95,17 +86,7 @@
         </tr>
       </thead>
       <tbody>
-        {#if loading}
-          {#each Array(5) as _}
-            <tr class="border-b border-gray-50">
-              {#each Array(6) as _}
-                <td class="px-6 py-4">
-                  <div class="h-4 bg-gray-100 rounded animate-pulse"></div>
-                </td>
-              {/each}
-            </tr>
-          {/each}
-        {:else if filtered.length === 0}
+        {#if filtered.length === 0}
           <tr>
             <td colspan="6" class="text-center py-16 text-gray-400">Aucun adhérent trouvé</td>
           </tr>

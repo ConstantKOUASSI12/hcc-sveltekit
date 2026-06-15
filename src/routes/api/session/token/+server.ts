@@ -3,8 +3,9 @@ import { auth } from '$lib/server/auth';
 import { json }  from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { prisma } from '$lib/server/prisma';
+import { env } from '$env/dynamic/private';
 
-const FLASK       = process.env.FLASK_API_URL ?? 'http://localhost:5000';
+const FLASK = env.FLASK_API_URL ?? 'http://localhost:5000';
 const BUFFER_MS   = 60_000; // 1 minute de marge avant expiration
 
 export const GET: RequestHandler = async ({ request, url }) => {

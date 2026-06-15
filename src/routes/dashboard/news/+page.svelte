@@ -1,6 +1,5 @@
 <!-- src/routes/dashboard/news/+page.svelte -->
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { useSession } from '$lib/auth-client';
   import { newsApi } from '$lib/api';
   import Topbar from '$lib/components/layout/Topbar.svelte';
@@ -17,19 +16,12 @@
   let isAdmin       = $derived(role === 'admin');
   let userId        = $derived(u?.flask_adherent_id ?? null);
 
-  let articles = $state<News[]>([]);
-  let loading  = $state(true);
+  let articles = $state<News[]>(data.articles);
   let showForm = $state(false);
   let form     = $state({ title: '', content: '' });
   let saving   = $state(false);
   let error    = $state('');
   let success  = $state('');
-
-  onMount(async () => {
-    const res = await newsApi.getAll();
-    if (res.data) articles = res.data;
-    loading = false;
-  });
 
   async function createNews() {
     if (!form.title || !form.content) {
@@ -110,11 +102,7 @@
   {/if}
 
   <!-- Articles list -->
-  {#if loading}
-    {#each Array(4) as _}
-      <div class="h-32 bg-gray-100 rounded-2xl animate-pulse"></div>
-    {/each}
-  {:else if articles.length === 0}
+  {#if articles.length === 0}
     <div class="card text-center py-16">
       <p class="text-gray-400">Aucune actualité publiée</p>
     </div>

@@ -1,7 +1,5 @@
 <!-- src/routes/dashboard/profile/+page.svelte -->
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { adherentsApi } from '$lib/api';
   import { useSession } from '$lib/auth-client';
   import Topbar from '$lib/components/layout/Topbar.svelte';
   import type { Adherent } from '$lib/types';
@@ -14,8 +12,7 @@
   let u    = $derived($session.data?.user ?? data.user);
   let role = $derived(u?.role ?? '');
 
-  let profile = $state<Adherent | null>(null);
-  let loading = $state(true);
+  let profile = $state<Adherent | null>(data.profile ?? null);
 
   const roleLabels: Record<string, string> = {
     admin: 'Administrateur', coach: 'Coach',
@@ -25,12 +22,6 @@
     admin: 'badge-admin', coach: 'badge-coach',
     player: 'badge-player', contributor: 'badge-contributor', pending: 'badge-pending'
   };
-
-  onMount(async () => {
-    const res = await adherentsApi.getMe();
-    if (res.data) profile = res.data;
-    loading = false;
-  });
 
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString('fr-FR', {
@@ -42,9 +33,7 @@
 <Topbar title="Mon profil" />
 
 <div class="p-4 md:p-8 space-y-6 animate-fade max-w-4xl">
-  {#if loading}
-    <div class="h-48 bg-gray-100 rounded-2xl animate-pulse"></div>
-  {:else if profile}
+  {#if profile}
 
     <!-- Header card -->
     <div class="bg-gradient-hcc rounded-2xl p-6 md:p-8 text-white relative overflow-hidden">

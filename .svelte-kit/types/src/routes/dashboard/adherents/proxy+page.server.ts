@@ -1,5 +1,5 @@
 // @ts-nocheck
-// src/routes/dashboard/pending/+page.server.ts
+// src/routes/dashboard/adherents/+page.server.ts
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { flaskGet } from '$lib/server/flask';
@@ -9,10 +9,10 @@ export const load = async ({ locals }: Parameters<PageServerLoad>[0]) => {
   const user = locals.user as Record<string, unknown> | null;
   const role = user?.role as string | null;
 
-  if (role !== 'admin') throw redirect(302, '/dashboard');
+  if (role !== 'admin' && role !== 'coach') throw redirect(302, '/dashboard');
 
-  const token   = (user?.flask_access_token as string) ?? null;
-  const pending = await flaskGet<Adherent[]>('/api/adherents/pending', token);
+  const token = (user?.flask_access_token as string) ?? null;
+  const adherents = await flaskGet<Adherent[]>('/api/adherents/', token);
 
-  return { pending: pending ?? [] };
+  return { adherents: adherents ?? [] };
 };

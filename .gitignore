@@ -4,3 +4,9 @@ node_modules
 
 /../generated/prisma
 GUIDE_SVELTE5.md
+
+# SQLite dev database
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

@@ -1,6 +1,5 @@
 <!-- src/routes/dashboard/matchs/+page.svelte -->
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { useSession } from '$lib/auth-client';
   import { matchsApi } from '$lib/api';
   import Topbar from '$lib/components/layout/Topbar.svelte';
@@ -17,18 +16,14 @@
   let isPlayer = $derived(role === 'player');
   let isAdmin  = $derived(role === 'admin');
 
-  let matchs   = $state<Match[]>([]);
-  let loading  = $state(true);
+  let matchs   = $state<Match[]>(data.matchs);
+  let loading  = $state(false);
   let showForm = $state(false);
   let error    = $state('');
   let success  = $state('');
 
   let form   = $state({ date: '', time: '', opponent: '', location: '', comment: '' });
   let saving = $state(false);
-
-  onMount(async () => {
-    await loadMatchs();
-  });
 
   async function loadMatchs() {
     loading = true;

@@ -261,12 +261,12 @@ export type UserGroupByOutputType = {
   id: string
   first_name: string
   last_name: string
-  contact: string
+  contact: string | null
   password: string | null
-  flask_access_token: string
-  flask_refresh_token: string
-  flask_access_expires: string
-  flask_refresh_expires: string
+  flask_access_token: string | null
+  flask_refresh_token: string | null
+  flask_access_expires: string | null
+  flask_refresh_expires: string | null
   emailVerified: boolean
   email: string
   name: string | null
@@ -305,12 +305,12 @@ export type UserWhereInput = {
   id?: Prisma.StringFilter<"User"> | string
   first_name?: Prisma.StringFilter<"User"> | string
   last_name?: Prisma.StringFilter<"User"> | string
-  contact?: Prisma.StringFilter<"User"> | string
+  contact?: Prisma.StringNullableFilter<"User"> | string | null
   password?: Prisma.StringNullableFilter<"User"> | string | null
-  flask_access_token?: Prisma.StringFilter<"User"> | string
-  flask_refresh_token?: Prisma.StringFilter<"User"> | string
-  flask_access_expires?: Prisma.StringFilter<"User"> | string
-  flask_refresh_expires?: Prisma.StringFilter<"User"> | string
+  flask_access_token?: Prisma.StringNullableFilter<"User"> | string | null
+  flask_refresh_token?: Prisma.StringNullableFilter<"User"> | string | null
+  flask_access_expires?: Prisma.StringNullableFilter<"User"> | string | null
+  flask_refresh_expires?: Prisma.StringNullableFilter<"User"> | string | null
   emailVerified?: Prisma.BoolFilter<"User"> | boolean
   email?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringNullableFilter<"User"> | string | null
@@ -328,12 +328,12 @@ export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
-  contact?: Prisma.SortOrder
+  contact?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
-  flask_access_token?: Prisma.SortOrder
-  flask_refresh_token?: Prisma.SortOrder
-  flask_access_expires?: Prisma.SortOrder
-  flask_refresh_expires?: Prisma.SortOrder
+  flask_access_token?: Prisma.SortOrderInput | Prisma.SortOrder
+  flask_refresh_token?: Prisma.SortOrderInput | Prisma.SortOrder
+  flask_access_expires?: Prisma.SortOrderInput | Prisma.SortOrder
+  flask_refresh_expires?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
   email?: Prisma.SortOrder
   name?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -349,6 +349,7 @@ export type UserOrderByWithRelationInput = {
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  contact?: string
   email?: string
   flask_adherent_id?: number
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
@@ -356,12 +357,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   first_name?: Prisma.StringFilter<"User"> | string
   last_name?: Prisma.StringFilter<"User"> | string
-  contact?: Prisma.StringFilter<"User"> | string
   password?: Prisma.StringNullableFilter<"User"> | string | null
-  flask_access_token?: Prisma.StringFilter<"User"> | string
-  flask_refresh_token?: Prisma.StringFilter<"User"> | string
-  flask_access_expires?: Prisma.StringFilter<"User"> | string
-  flask_refresh_expires?: Prisma.StringFilter<"User"> | string
+  flask_access_token?: Prisma.StringNullableFilter<"User"> | string | null
+  flask_refresh_token?: Prisma.StringNullableFilter<"User"> | string | null
+  flask_access_expires?: Prisma.StringNullableFilter<"User"> | string | null
+  flask_refresh_expires?: Prisma.StringNullableFilter<"User"> | string | null
   emailVerified?: Prisma.BoolFilter<"User"> | boolean
   name?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.StringFilter<"User"> | string
@@ -371,18 +371,18 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sessions?: Prisma.SessionListRelationFilter
   accounts?: Prisma.AccountListRelationFilter
-}, "id" | "email" | "flask_adherent_id">
+}, "id" | "contact" | "email" | "flask_adherent_id">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   first_name?: Prisma.SortOrder
   last_name?: Prisma.SortOrder
-  contact?: Prisma.SortOrder
+  contact?: Prisma.SortOrderInput | Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
-  flask_access_token?: Prisma.SortOrder
-  flask_refresh_token?: Prisma.SortOrder
-  flask_access_expires?: Prisma.SortOrder
-  flask_refresh_expires?: Prisma.SortOrder
+  flask_access_token?: Prisma.SortOrderInput | Prisma.SortOrder
+  flask_refresh_token?: Prisma.SortOrderInput | Prisma.SortOrder
+  flask_access_expires?: Prisma.SortOrderInput | Prisma.SortOrder
+  flask_refresh_expires?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerified?: Prisma.SortOrder
   email?: Prisma.SortOrder
   name?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -406,12 +406,12 @@ export type UserScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
   first_name?: Prisma.StringWithAggregatesFilter<"User"> | string
   last_name?: Prisma.StringWithAggregatesFilter<"User"> | string
-  contact?: Prisma.StringWithAggregatesFilter<"User"> | string
+  contact?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   password?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  flask_access_token?: Prisma.StringWithAggregatesFilter<"User"> | string
-  flask_refresh_token?: Prisma.StringWithAggregatesFilter<"User"> | string
-  flask_access_expires?: Prisma.StringWithAggregatesFilter<"User"> | string
-  flask_refresh_expires?: Prisma.StringWithAggregatesFilter<"User"> | string
+  flask_access_token?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  flask_refresh_token?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  flask_access_expires?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  flask_refresh_expires?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   emailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   name?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -427,12 +427,12 @@ export type UserCreateInput = {
   id?: string
   first_name: string
   last_name: string
-  contact: string
+  contact?: string | null
   password?: string | null
-  flask_access_token: string
-  flask_refresh_token: string
-  flask_access_expires: string
-  flask_refresh_expires: string
+  flask_access_token?: string | null
+  flask_refresh_token?: string | null
+  flask_access_expires?: string | null
+  flask_refresh_expires?: string | null
   emailVerified?: boolean
   email: string
   name?: string | null
@@ -450,12 +450,12 @@ export type UserUncheckedCreateInput = {
   id?: string
   first_name: string
   last_name: string
-  contact: string
+  contact?: string | null
   password?: string | null
-  flask_access_token: string
-  flask_refresh_token: string
-  flask_access_expires: string
-  flask_refresh_expires: string
+  flask_access_token?: string | null
+  flask_refresh_token?: string | null
+  flask_access_expires?: string | null
+  flask_refresh_expires?: string | null
   emailVerified?: boolean
   email: string
   name?: string | null
@@ -473,12 +473,12 @@ export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  contact?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  flask_access_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_access_expires?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_expires?: Prisma.StringFieldUpdateOperationsInput | string
+  flask_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_access_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -496,12 +496,12 @@ export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  contact?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  flask_access_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_access_expires?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_expires?: Prisma.StringFieldUpdateOperationsInput | string
+  flask_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_access_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -519,12 +519,12 @@ export type UserCreateManyInput = {
   id?: string
   first_name: string
   last_name: string
-  contact: string
+  contact?: string | null
   password?: string | null
-  flask_access_token: string
-  flask_refresh_token: string
-  flask_access_expires: string
-  flask_refresh_expires: string
+  flask_access_token?: string | null
+  flask_refresh_token?: string | null
+  flask_access_expires?: string | null
+  flask_refresh_expires?: string | null
   emailVerified?: boolean
   email: string
   name?: string | null
@@ -540,12 +540,12 @@ export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  contact?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  flask_access_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_access_expires?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_expires?: Prisma.StringFieldUpdateOperationsInput | string
+  flask_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_access_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -561,12 +561,12 @@ export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  contact?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  flask_access_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_access_expires?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_expires?: Prisma.StringFieldUpdateOperationsInput | string
+  flask_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_access_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -710,12 +710,12 @@ export type UserCreateWithoutSessionsInput = {
   id?: string
   first_name: string
   last_name: string
-  contact: string
+  contact?: string | null
   password?: string | null
-  flask_access_token: string
-  flask_refresh_token: string
-  flask_access_expires: string
-  flask_refresh_expires: string
+  flask_access_token?: string | null
+  flask_refresh_token?: string | null
+  flask_access_expires?: string | null
+  flask_refresh_expires?: string | null
   emailVerified?: boolean
   email: string
   name?: string | null
@@ -732,12 +732,12 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   id?: string
   first_name: string
   last_name: string
-  contact: string
+  contact?: string | null
   password?: string | null
-  flask_access_token: string
-  flask_refresh_token: string
-  flask_access_expires: string
-  flask_refresh_expires: string
+  flask_access_token?: string | null
+  flask_refresh_token?: string | null
+  flask_access_expires?: string | null
+  flask_refresh_expires?: string | null
   emailVerified?: boolean
   email: string
   name?: string | null
@@ -770,12 +770,12 @@ export type UserUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  contact?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  flask_access_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_access_expires?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_expires?: Prisma.StringFieldUpdateOperationsInput | string
+  flask_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_access_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -792,12 +792,12 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  contact?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  flask_access_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_access_expires?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_expires?: Prisma.StringFieldUpdateOperationsInput | string
+  flask_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_access_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -814,12 +814,12 @@ export type UserCreateWithoutAccountsInput = {
   id?: string
   first_name: string
   last_name: string
-  contact: string
+  contact?: string | null
   password?: string | null
-  flask_access_token: string
-  flask_refresh_token: string
-  flask_access_expires: string
-  flask_refresh_expires: string
+  flask_access_token?: string | null
+  flask_refresh_token?: string | null
+  flask_access_expires?: string | null
+  flask_refresh_expires?: string | null
   emailVerified?: boolean
   email: string
   name?: string | null
@@ -836,12 +836,12 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   id?: string
   first_name: string
   last_name: string
-  contact: string
+  contact?: string | null
   password?: string | null
-  flask_access_token: string
-  flask_refresh_token: string
-  flask_access_expires: string
-  flask_refresh_expires: string
+  flask_access_token?: string | null
+  flask_refresh_token?: string | null
+  flask_access_expires?: string | null
+  flask_refresh_expires?: string | null
   emailVerified?: boolean
   email: string
   name?: string | null
@@ -874,12 +874,12 @@ export type UserUpdateWithoutAccountsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  contact?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  flask_access_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_access_expires?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_expires?: Prisma.StringFieldUpdateOperationsInput | string
+  flask_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_access_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -896,12 +896,12 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   first_name?: Prisma.StringFieldUpdateOperationsInput | string
   last_name?: Prisma.StringFieldUpdateOperationsInput | string
-  contact?: Prisma.StringFieldUpdateOperationsInput | string
+  contact?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  flask_access_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_token?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_access_expires?: Prisma.StringFieldUpdateOperationsInput | string
-  flask_refresh_expires?: Prisma.StringFieldUpdateOperationsInput | string
+  flask_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_access_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flask_refresh_expires?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
   email?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1060,12 +1060,12 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     id: string
     first_name: string
     last_name: string
-    contact: string
+    contact: string | null
     password: string | null
-    flask_access_token: string
-    flask_refresh_token: string
-    flask_access_expires: string
-    flask_refresh_expires: string
+    flask_access_token: string | null
+    flask_refresh_token: string | null
+    flask_access_expires: string | null
+    flask_refresh_expires: string | null
     emailVerified: boolean
     email: string
     name: string | null
