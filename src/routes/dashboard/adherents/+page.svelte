@@ -1,14 +1,18 @@
 <!-- src/routes/dashboard/adherents/+page.svelte -->
 <script lang="ts">
-  import Topbar from '$lib/components/layout/Topbar.svelte';
+  import Topbar     from '$lib/components/layout/Topbar.svelte';
+  import Pagination from '$lib/components/ui/Pagination.svelte';
   import type { Adherent } from '$lib/types';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
-  let adherents = $state<Adherent[]>(data.adherents);
+  const PER_PAGE = 8;
+
+  let adherents  = $state<Adherent[]>(data.adherents);
   let search     = $state('');
   let roleFilter = $state('all');
+  let page       = $state(1);
 
   const roles = ['all', 'admin', 'coach', 'player', 'contributor', 'pending'];
   const roleLabels: Record<string, string> = {
@@ -30,6 +34,18 @@
       return matchSearch && matchRole;
     })
   );
+
+  let totalPages = $derived(Math.max(1, Math.ceil(filtered.length / PER_PAGE)));
+
+  let paginated = $derived(
+    filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  );
+
+  // Reset to page 1 when filters change
+  $effect(() => {
+    search; roleFilter;
+    page = 1;
+  });
 
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -86,12 +102,12 @@
         </tr>
       </thead>
       <tbody>
-        {#if filtered.length === 0}
+        {#if paginated.length === 0}
           <tr>
             <td colspan="6" class="text-center py-16 text-gray-400">Aucun adhérent trouvé</td>
           </tr>
         {:else}
-          {#each filtered as adherent}
+          {#each paginated as adherent}
             <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
@@ -129,5 +145,15 @@
       </tbody>
     </table>
     </div>
+
+    <!-- Pagination -->
+    {#if filtered.length > PER_PAGE}
+      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4">
+        <span class="text-xs text-gray-400">
+          {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} sur {filtered.length}
+        </span>
+        <Pagination {totalPages} currentPage={page} onPageChange={(p) => page = p} />
+      </div>
+    {/if}
   </div>
 </div>

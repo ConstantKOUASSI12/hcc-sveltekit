@@ -1,8 +1,9 @@
 <!-- src/routes/dashboard/news/+page.svelte -->
 <script lang="ts">
   import { userStore } from '$lib/stores/user';
-  import { newsApi } from '$lib/api';
-  import Topbar from '$lib/components/layout/Topbar.svelte';
+  import { newsApi }   from '$lib/api';
+  import Topbar        from '$lib/components/layout/Topbar.svelte';
+  import Pagination    from '$lib/components/ui/Pagination.svelte';
   import type { News } from '$lib/types';
   import type { PageData } from './$types';
 
@@ -14,12 +15,32 @@
   let isAdmin       = $derived(role === 'admin');
   let userId        = $derived(u?.flask_adherent_id ?? null);
 
-  let articles = $state<News[]>(data.articles);
-  let showForm = $state(false);
-  let form     = $state({ title: '', content: '' });
-  let saving   = $state(false);
-  let error    = $state('');
-  let success  = $state('');
+  const PER_PAGE = 8;
+
+  let articles     = $state<News[]>(data.articles);
+  let showForm     = $state(false);
+  let form         = $state({ title: '', content: '' });
+  let saving       = $state(false);
+  let error        = $state('');
+  let success      = $state('');
+  let search       = $state('');
+  let authorFilter = $state<'all' | 'mine'>('all');
+  let page         = $state(1);
+
+  let filtered = $derived(
+    articles.filter(a => {
+      const matchSearch = !search ||
+        a.title.toLowerCase().includes(search.toLowerCase()) ||
+        a.content.toLowerCase().includes(search.toLowerCase());
+      const matchAuthor = authorFilter === 'all' || a.author?.id === userId;
+      return matchSearch && matchAuthor;
+    })
+  );
+
+  let totalPages = $derived(Math.max(1, Math.ceil(filtered.length / PER_PAGE)));
+  let paginated  = $derived(filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE));
+
+  $effect(() => { search; authorFilter; page = 1; });
 
   async function createNews() {
     if (!form.title || !form.content) {
@@ -99,14 +120,50 @@
     </div>
   {/if}
 
-  <!-- Articles list -->
-  {#if articles.length === 0}
+  <!-- Filter bar -->
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+    <!-- Search -->
+    <div class="relative flex-1 min-w-0">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input type="text" class="input pl-9" placeholder="Rechercher une actualité..."
+             bind:value={search}/>
+    </div>
+
+    <!-- Author filter (only for contributor/admin) -->
+    {#if isContributor || isAdmin}
+      <div class="flex gap-1.5 shrink-0">
+        {#each [
+          { key: 'all',  label: `Tous (${articles.length})` },
+          { key: 'mine', label: 'Mes articles' },
+        ] as f}
+          <button
+            onclick={() => authorFilter = f.key as typeof authorFilter}
+            class="text-sm px-4 py-2 rounded-xl font-medium transition-all
+                   {authorFilter === f.key
+                     ? 'bg-hcc-600 text-white'
+                     : 'bg-white border border-gray-200 text-gray-500 hover:border-hcc-300'}">
+            {f.label}
+          </button>
+        {/each}
+      </div>
+    {/if}
+
+    <div class="text-sm text-gray-400 bg-gray-100 px-3 py-2 rounded-lg shrink-0">
+      {filtered.length} / {articles.length} articles
+    </div>
+  </div>
+
+  <!-- Grid -->
+  {#if filtered.length === 0}
     <div class="card text-center py-16">
-      <p class="text-gray-400">Aucune actualité publiée</p>
+      <p class="text-gray-400">Aucune actualité trouvée</p>
     </div>
   {:else}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {#each articles as article}
+      {#each paginated as article}
         <div class="card hover:border-hcc-200 transition-all group">
           <div class="flex items-start justify-between gap-3 mb-3">
             <a href="/dashboard/news/{article.id}"
@@ -141,5 +198,15 @@
         </div>
       {/each}
     </div>
+
+    <!-- Pagination -->
+    {#if filtered.length > PER_PAGE}
+      <div class="flex items-center justify-between gap-4 pt-2">
+        <span class="text-xs text-gray-400">
+          {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} sur {filtered.length}
+        </span>
+        <Pagination {totalPages} currentPage={page} onPageChange={(p) => page = p} />
+      </div>
+    {/if}
   {/if}
 </div>
