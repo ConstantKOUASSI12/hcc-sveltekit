@@ -1,23 +1,18 @@
 <!-- src/routes/dashboard/+layout.svelte -->
 <script lang="ts">
-  import { useSession } from '$lib/auth-client';
-  import { goto }       from '$app/navigation';
-  import Sidebar        from '$lib/components/layout/Sidebar.svelte';
+  import Sidebar         from '$lib/components/layout/Sidebar.svelte';
   import { sidebarOpen } from '$lib/stores/sidebar';
+  import { userStore }   from '$lib/stores/user';
   import type { LayoutData } from './$types';
   import type { Snippet } from 'svelte';
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
 
-  const session = useSession();
-
   $effect(() => {
-    if (!$session.isPending && !$session.data) {
-      goto('/auth/login');
-    }
+    userStore.set(data.user ?? null);
   });
 
-  let user = $derived($session.data?.user ?? data.user);
+  let user = $derived($userStore ?? data.user);
 </script>
 
 {#if user}

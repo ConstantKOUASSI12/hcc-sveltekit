@@ -2,14 +2,14 @@
 <script lang="ts">
   import { page }       from '$app/stores';
   import { goto }       from '$app/navigation';
-  import { useSession, signOut } from '$lib/auth-client';
+  import { signOut }    from '$lib/auth-client';
   import { sidebarOpen } from '$lib/stores/sidebar';
-  import type { User } from '$lib/auth-client';
+  import { userStore }   from '$lib/stores/user';
+  import type { User }   from '$lib/auth-client';
 
   let { user = null }: { user?: User | null } = $props();
 
-  const session = useSession();
-  let u    = $derived($session.data?.user ?? user);
+  let u = $derived($userStore ?? user);
   let role = $derived(u?.role ?? '');
 
   type NavItem = { label: string; href: string; icon: string; roles: string[] };

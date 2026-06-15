@@ -1,15 +1,13 @@
 <!-- src/routes/dashboard/profile/+page.svelte -->
 <script lang="ts">
-  import { useSession } from '$lib/auth-client';
+  import { userStore } from '$lib/stores/user';
   import Topbar from '$lib/components/layout/Topbar.svelte';
   import type { Adherent } from '$lib/types';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
-  const session = useSession();
-
-  let u    = $derived($session.data?.user ?? data.user);
+  let u    = $derived($userStore ?? data.user);
   let role = $derived(u?.role ?? '');
 
   let profile = $state<Adherent | null>(data.profile ?? null);

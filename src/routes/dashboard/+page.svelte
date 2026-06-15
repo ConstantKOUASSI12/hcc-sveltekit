@@ -3,14 +3,12 @@
   import Topbar from '$lib/components/layout/Topbar.svelte';
   import StatCard from '$lib/components/dashboard/StatCard.svelte';
   import type { Match, News, Adherent } from '$lib/types';
-  import { useSession } from '$lib/auth-client';
+  import { userStore } from '$lib/stores/user';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
-  const session = useSession();
-
-  let u           = $derived($session.data?.user ?? data.user);
+  let u           = $derived($userStore ?? data.user);
   let role        = $derived(u?.role ?? '');
   let isAdmin     = $derived(role === 'admin');
   let isCoach     = $derived(role === 'coach');

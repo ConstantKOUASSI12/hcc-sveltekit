@@ -2,16 +2,14 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { adherentsApi } from '$lib/api';
-  import { useSession } from '$lib/auth-client';
+  import { userStore } from '$lib/stores/user';
   import Topbar from '$lib/components/layout/Topbar.svelte';
   import type { Adherent } from '$lib/types';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
 
-  const session = useSession();
-
-  let u       = $derived($session.data?.user ?? data.user);
+  let u       = $derived($userStore ?? data.user);
   let role    = $derived(u?.role ?? '');
   let isAdmin = $derived(role === 'admin');
   let userId  = $derived(u?.flask_adherent_id ?? null);

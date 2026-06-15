@@ -1,7 +1,7 @@
 <!-- src/routes/dashboard/matchs/[id]/+page.svelte -->
 <script lang="ts">
   import { page } from '$app/stores';
-  import { useSession } from '$lib/auth-client';
+  import { userStore } from '$lib/stores/user';
   import { matchsApi } from '$lib/api';
   import Topbar from '$lib/components/layout/Topbar.svelte';
   import type { Match } from '$lib/types';
@@ -9,9 +9,7 @@
 
   let { data }: { data: PageData } = $props();
 
-  const session = useSession();
-
-  let u       = $derived($session.data?.user ?? data.user);
+  let u       = $derived($userStore ?? data.user);
   let role    = $derived(u?.role ?? '');
   let isCoach  = $derived(role === 'coach');
   let isAdmin  = $derived(role === 'admin');
