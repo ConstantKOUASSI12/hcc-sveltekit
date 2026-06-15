@@ -16,7 +16,57 @@ function createClient(): PrismaClient {
   return new PrismaClient({ adapter });
 }
 
-// Singleton : évite de créer plusieurs connexions lors des rechargements HMR en dev
 const g = globalThis as unknown as { prisma?: PrismaClient };
-export const prisma = g.prisma ?? createClient();
-if (process.env.NODE_ENV !== 'production') g.prisma = prisma;
+if (!g.prisma) g.prisma = createClient();
+
+async function reconnect(): Promise<void> {
+  console.warn('[prisma] SQLITE_READONLY_DBMOVED — reconnexion automatique');
+  await g.prisma?.$disconnect().catch(() => {});
+  g.prisma = createClient();
+}
+
+// Proxy auto-reconnect : intercepte SQLITE_READONLY_DBMOVED sur les delegates (prisma.user, etc.)
+// et les méthodes top-level ($transaction…) sans invalider les imports existants.
+export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_, prop: string | symbol) {
+    if (typeof prop === 'symbol') return (g.prisma as any)[prop];
+
+    const propKey = prop as string;
+    const raw = (g.prisma as any)[propKey];
+
+    // Model delegates : prisma.user, prisma.session, etc.
+    if (raw && typeof raw === 'object') {
+      return new Proxy(raw as object, {
+        get(_, method: string | symbol) {
+          const fn = (raw as any)[method as string];
+          if (typeof fn !== 'function') return fn;
+          return async (...args: unknown[]) => {
+            try {
+              return await fn.apply(raw, args);
+            } catch (e: any) {
+              if (e?.code !== 'SQLITE_READONLY_DBMOVED') throw e;
+              await reconnect();
+              const fresh = (g.prisma as any)[propKey];
+              return await (fresh[method as string] as Function).apply(fresh, args);
+            }
+          };
+        },
+      });
+    }
+
+    // Méthodes top-level : $transaction, $connect, $disconnect, etc.
+    if (typeof raw === 'function') {
+      return async (...args: unknown[]) => {
+        try {
+          return await (raw as Function).apply(g.prisma, args);
+        } catch (e: any) {
+          if (e?.code !== 'SQLITE_READONLY_DBMOVED') throw e;
+          await reconnect();
+          return await ((g.prisma as any)[propKey] as Function).apply(g.prisma, args);
+        }
+      };
+    }
+
+    return raw;
+  },
+});

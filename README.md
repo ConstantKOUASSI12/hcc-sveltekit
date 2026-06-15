@@ -113,9 +113,96 @@ npm run dev
 
 ### Comptes de test
 
+Tous les comptes utilisent le mot de passe : **`1234567890`**
+
+**Comptes actifs**
+
+| Email | Rôle | Accès |
+|-------|------|-------|
+| `kouassiconstant94@gmail.com` | `admin` | Tout (adhérents, validation, matchs, news) |
+| `jean13@liveee.fr` | `coach` | Adhérents, matchs (création), news |
+| `jean13@live.fr` | `contributor` | News (création/suppression) |
+| `jean13@livee.fr` | `player` | Matchs (inscription), news |
+
+**Comptes en attente de validation** (bloqués à la connexion tant qu'un admin ne les valide pas)
+
+| Email | Rôle |
+|-------|------|
+| `lucas.martin@hcc.fr` | `pending` |
+| `emma.bernard@hcc.fr` | `pending` |
+| `jules.petit@hcc.fr` | `pending` |
+| `lea.robert@hcc.fr` | `pending` |
+| `nathan.moreau@hcc.fr` | `pending` |
+
+---
+
+### Streaming SvelteKit + résolution de Promise dans $state
+
+Dans ce projet, les pages `matchs`, `news` et `adherents` utilisent le **streaming SvelteKit** :
+le serveur retourne une `Promise` sans l'attendre, ce qui permet au HTML d'être envoyé immédiatement
+(squelette de chargement), puis les données arrivent en arrière-plan.
+
+```ts
+// +page.server.ts — retourner la Promise directement (sans await)
+export const load: PageServerLoad = ({ locals, setHeaders }) => {
+  const token = (locals.user as Record<string, unknown>)?.flask_access_token as string;
+
+  setHeaders({ 'cache-control': 'private, max-age=60' });
+
+  return {
+    matchs: flaskGet<Match[]>('/api/matchs/', token), // Promise non résolue
+  };
+};
 ```
-kouassiconstant94@gmail.com    / 1234567890
+
+```svelte
+<!-- +page.svelte — résoudre la Promise dans $state pour permettre les mutations -->
+<script lang="ts">
+  let { data } = $props();
+
+  let matchs     = $state<Match[]>([]);
+  let dataLoaded = $state(false);
+
+  // Promise.resolve() fonctionne que data.matchs soit déjà résolu ou non
+  $effect(() => {
+    Promise.resolve(data.matchs).then(m => {
+      matchs = m ?? [];
+      dataLoaded = true;
+    });
+  });
+
+  // Les mutations fonctionnent normalement sur $state
+  async function createMatch() {
+    const res = await matchsApi.create(form);
+    if (res.data) matchs = [res.data, ...matchs]; // mutation directe
+  }
+</script>
+
+{#if !dataLoaded}
+  <!-- Squelette pendant le chargement -->
+  {#each Array(5) as _}
+    <div class="h-20 bg-gray-50 rounded-2xl animate-pulse"></div>
+  {/each}
+{:else}
+  <!-- Contenu réel -->
+  {#each matchs as match}...{/each}
+{/if}
 ```
+
+> **Pourquoi ce pattern ?**  
+> `{#await}` natif de Svelte ne permet pas d'utiliser `$state`/`$derived` à l'intérieur du bloc.  
+> Le pattern `$effect` + `$state` résout ce problème tout en conservant la capacité de muter les données localement (ajout/suppression d'éléments sans rechargement de page).
+
+---
+
+### Composants réutilisables du projet
+
+| Composant | Rôle |
+|-----------|------|
+| `src/lib/components/ui/Pagination.svelte` | Barre de pagination avec ellipsis |
+| `src/lib/components/dashboard/StatCard.svelte` | Carte de statistique (dashboard) |
+| `src/lib/components/layout/Sidebar.svelte` | Navigation latérale responsive |
+| `src/lib/components/layout/Topbar.svelte` | Barre supérieure avec slot pour actions |
 
 ---
 
@@ -125,7 +212,7 @@ kouassiconstant94@gmail.com    / 1234567890
 
 ```
 src/
-├── hooks.server.ts              # Middleware global : session, redirections auth
+├── hooks.server.ts              # Middleware global : session, refresh token Flask, redirections
 ├── app.d.ts                     # Types globaux (locals.user, locals.session)
 │
 ├── lib/
@@ -134,15 +221,18 @@ src/
 │   │   └── index.ts             # API par domaine : adherentsApi, matchsApi, newsApi
 │   ├── server/
 │   │   ├── auth.ts              # Configuration Better Auth
-│   │   └── prisma.ts            # Instance Prisma avec adapter PostgreSQL
+│   │   ├── flask.ts             # flaskGet() — requêtes SSR vers Flask
+│   │   └── prisma.ts            # Singleton PrismaClient (adapté HMR dev)
 │   ├── components/
+│   │   ├── ui/
+│   │   │   └── Pagination.svelte  # Pagination réutilisable
 │   │   ├── dashboard/
-│   │   │   └── StatCard.svelte  # Carte de statistique réutilisable
+│   │   │   └── StatCard.svelte    # Carte de statistique
 │   │   └── layout/
-│   │       ├── Sidebar.svelte   # Navigation latérale
-│   │       └── Topbar.svelte    # Barre supérieure
+│   │       ├── Sidebar.svelte     # Navigation latérale
+│   │       └── Topbar.svelte      # Barre supérieure
 │   ├── stores/
-│   │   └── sidebar.ts           # État ouvert/fermé de la sidebar
+│   │   └── user.ts              # Store Svelte pour l'utilisateur connecté
 │   └── types/
 │       └── index.ts             # Types TypeScript partagés
 │
@@ -156,19 +246,19 @@ src/
     │   ├── +layout.server.ts    # Charge user/session dans les pages filles
     │   ├── +page.svelte         # Vue d'ensemble (stats, matchs récents, actualités)
     │   ├── adherents/
-    │   │   ├── +page.svelte     # Liste des adhérents
+    │   │   ├── +page.svelte     # Liste filtrée + pagination (streaming)
     │   │   └── [id]/            # Détail d'un adhérent
     │   ├── matchs/
-    │   │   ├── +page.svelte     # Liste + création de matchs
+    │   │   ├── +page.svelte     # Liste unifiée + filtres + pagination (streaming)
     │   │   └── [id]/            # Détail d'un match + inscription
     │   ├── news/
-    │   │   ├── +page.svelte     # Liste + création d'actualités
+    │   │   ├── +page.svelte     # Grille + recherche + pagination (streaming)
     │   │   └── [id]/            # Détail d'une actualité
     │   ├── pending/             # Adhérents en attente de validation (admin)
     │   └── profile/             # Profil utilisateur connecté
     └── api/
         ├── auth/[...all]/       # Proxy Better Auth
-        ├── session/token/       # Endpoint SvelteKit → renvoie le token Flask
+        ├── session/token/       # Renvoie le token Flask frais (bypass cookie cache)
         └── admin/sync-user/     # Synchronisation rôle Flask → Neon
 ```
 
@@ -212,35 +302,37 @@ app/
 - [x] Connexion Better Auth seul (pour les comptes créés directement dans SvelteKit)
 - [x] Protection des routes par middleware (`hooks.server.ts`)
 - [x] Redirection automatique : connecté → dashboard, non connecté → login
-- [x] Gestion des tokens Flask (access + refresh) avec retry automatique sur 401
+- [x] Rafraîchissement automatique du token Flask (access + refresh) côté SSR et client
 - [x] Blocage des comptes en attente de validation (`role === 'pending'`)
 
 ### Adhérents
-- [x] Liste de tous les adhérents (admin/coach)
+- [x] Liste filtrée par rôle + recherche + pagination (admin/coach)
 - [x] Détail d'un adhérent
 - [x] Liste des comptes en attente de validation
 - [x] Validation d'un adhérent avec attribution de rôle (admin uniquement)
 - [x] Inscription d'un nouvel adhérent
 
 ### Matchs
-- [x] Liste de tous les matchs de la saison
+- [x] Liste unifiée avec filtres (Tous / À venir / Terminés) + pagination
 - [x] Détail d'un match (lieu, date, commentaire, score)
 - [x] Création d'un match (coach/admin)
 - [x] Modification d'un match (coach/admin)
 - [x] Inscription / désinscription d'un joueur à un match
 
 ### Actualités
-- [x] Liste des actualités
+- [x] Liste avec recherche + filtre auteur + pagination
 - [x] Détail d'une actualité
 - [x] Création d'une actualité (coach/admin/contributor)
 - [x] Suppression d'une actualité (auteur ou admin)
 
-### Interface
+### Interface & Performance
 - [x] Dashboard avec statistiques (adhérents, matchs, actualités, comptes en attente)
 - [x] Prochain match mis en avant sur le dashboard
 - [x] Sidebar responsive avec navigation par rôle
-- [x] Squelettes de chargement (skeleton screens)
-- [x] Système de rôles : `admin`, `coach`, `player`, `contributor`, `pending`
+- [x] Squelettes de chargement animés (skeleton screens)
+- [x] Streaming SvelteKit : pages rendues instantanément, données chargées en arrière-plan
+- [x] Cache navigateur 60s (`cache-control: private, max-age=60`) sur toutes les pages dashboard
+- [x] Chargement parallèle des données Flask (`Promise.all`) sur le dashboard home
 
 ### Routes par rôle
 
@@ -263,7 +355,6 @@ app/
 - [ ] **Graphiques** — Chart.js est installé mais les graphiques ne sont pas implémentés
 - [ ] **Notifications en temps réel** — les mises à jour nécessitent un rechargement manuel
 - [ ] **Saisie du score** — le champ `score` existe en base mais l'interface de saisie manque
-- [ ] **Pagination** — toutes les listes chargent l'intégralité des données
 - [ ] **Tests** — aucun test unitaire ou d'intégration n'a été écrit
 
 ---
@@ -278,7 +369,15 @@ app/
 
 ---
 
-### 2. Migration SQLite → PostgreSQL (Prisma 7)
+### 2. Token Flask expiré malgré une session active (cookie cache Better Auth)
+
+**Problème** : Better Auth stocke les données utilisateur dans le cookie de session avec un TTL de 2h (`cookieCache`). Si le token Flask expire entre deux visites, `getSession()` retourne le cookie (stale) — Flask renvoie 401 silencieusement et la page s'affiche vide.
+
+**Solution** : Dans `hooks.server.ts`, contournement du cookie cache via une lecture directe Prisma. Si l'access token est expiré (avec 60s de marge), appel Flask `/api/auth/refresh` et injection du nouveau token dans `locals.user`. L'update Prisma est en best-effort (wrapped dans son propre try/catch) pour ne pas bloquer si la base est temporairement indisponible.
+
+---
+
+### 3. Migration SQLite → PostgreSQL (Prisma 7)
 
 **Problème** : Vercel n'a pas de système de fichiers persistant — SQLite est incompatible avec un déploiement serverless. De plus, Prisma 7 a supprimé le champ `url` dans `schema.prisma` (breaking change par rapport à Prisma 6).
 
@@ -290,7 +389,15 @@ app/
 
 ---
 
-### 3. Variables d'environnement publiques sur Vercel
+```ts
+const g = globalThis as unknown as { prisma?: PrismaClient };
+export const prisma = g.prisma ?? createClient();
+if (process.env.NODE_ENV !== 'production') g.prisma = prisma;
+```
+
+---
+
+### 4. Variables d'environnement publiques sur Vercel
 
 **Problème** : Le client API utilisait `import.meta.env.PUBLIC_API_URL` qui n'était pas résolu correctement par Vercel → fallback systématique sur `localhost:5000` en production.
 
@@ -307,7 +414,7 @@ const BASE = PUBLIC_API_URL;
 
 ---
 
-### 4. Connexion à la base de données Flask sur Render
+### 5. Connexion à la base de données Flask sur Render
 
 **Problème** : La variable `DATABASE_URL` du service Flask utilisait l'URL **interne** Render (`dpg-xxx-a`) qui ne se résout pas depuis un container Docker — erreur `Name or service not known`.
 

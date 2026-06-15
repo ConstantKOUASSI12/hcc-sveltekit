@@ -17,7 +17,8 @@
 
   const PER_PAGE = 8;
 
-  let articles     = $state<News[]>(data.articles);
+  let articles     = $state<News[]>([]);
+  let dataLoaded   = $state(false);
   let showForm     = $state(false);
   let form         = $state({ title: '', content: '' });
   let saving       = $state(false);
@@ -26,6 +27,10 @@
   let search       = $state('');
   let authorFilter = $state<'all' | 'mine'>('all');
   let page         = $state(1);
+
+  $effect(() => {
+    Promise.resolve(data.articles).then(a => { articles = a ?? []; dataLoaded = true; });
+  });
 
   let filtered = $derived(
     articles.filter(a => {
@@ -120,9 +125,8 @@
     </div>
   {/if}
 
-  <!-- Filter bar -->
+  <!-- Filter bar (toujours visible) -->
   <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-    <!-- Search -->
     <div class="relative flex-1 min-w-0">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -131,8 +135,6 @@
       <input type="text" class="input pl-9" placeholder="Rechercher une actualité..."
              bind:value={search}/>
     </div>
-
-    <!-- Author filter (only for contributor/admin) -->
     {#if isContributor || isAdmin}
       <div class="flex gap-1.5 shrink-0">
         {#each [
@@ -150,14 +152,29 @@
         {/each}
       </div>
     {/if}
-
     <div class="text-sm text-gray-400 bg-gray-100 px-3 py-2 rounded-lg shrink-0">
       {filtered.length} / {articles.length} articles
     </div>
   </div>
 
-  <!-- Grid -->
-  {#if filtered.length === 0}
+  {#if !dataLoaded}
+    <!-- Skeleton initial -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {#each Array(4) as _}
+        <div class="card h-40 animate-pulse bg-gray-50 flex flex-col gap-3 justify-between">
+          <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div class="space-y-2">
+            <div class="h-3 bg-gray-100 rounded w-full"></div>
+            <div class="h-3 bg-gray-100 rounded w-5/6"></div>
+          </div>
+          <div class="flex justify-between">
+            <div class="h-3 bg-gray-100 rounded w-24"></div>
+            <div class="h-3 bg-gray-100 rounded w-16"></div>
+          </div>
+        </div>
+      {/each}
+    </div>
+  {:else if filtered.length === 0}
     <div class="card text-center py-16">
       <p class="text-gray-400">Aucune actualité trouvée</p>
     </div>
@@ -199,7 +216,6 @@
       {/each}
     </div>
 
-    <!-- Pagination -->
     {#if filtered.length > PER_PAGE}
       <div class="flex items-center justify-between gap-4 pt-2">
         <span class="text-xs text-gray-400">

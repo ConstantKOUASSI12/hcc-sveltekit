@@ -3,11 +3,13 @@ import type { PageServerLoad } from './$types';
 import { flaskGet } from '$lib/server/flask';
 import type { Match } from '$lib/types';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = ({ locals, setHeaders }) => {
   const user  = locals.user as Record<string, unknown> | null;
   const token = (user?.flask_access_token as string) ?? null;
 
-  const matchs = await flaskGet<Match[]>('/api/matchs/', token);
+  setHeaders({ 'cache-control': 'private, max-age=60' });
 
-  return { matchs: matchs ?? [] };
+  return {
+    matchs: flaskGet<Match[]>('/api/matchs/', token),
+  };
 };

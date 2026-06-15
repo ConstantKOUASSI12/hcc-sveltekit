@@ -17,16 +17,20 @@
 
   const PER_PAGE = 8;
 
-  let matchs       = $state<Match[]>(data.matchs);
-  let loading      = $state(false);
-  let showForm     = $state(false);
-  let error        = $state('');
-  let success      = $state('');
+  let matchs      = $state<Match[]>([]);
+  let dataLoaded  = $state(false);
+  let loading     = $state(false);
+  let showForm    = $state(false);
+  let error       = $state('');
+  let success     = $state('');
   let statusFilter = $state<'all' | 'upcoming' | 'finished'>('all');
-  let page         = $state(1);
+  let page        = $state(1);
+  let form        = $state({ date: '', time: '', opponent: '', location: '', comment: '' });
+  let saving      = $state(false);
 
-  let form   = $state({ date: '', time: '', opponent: '', location: '', comment: '' });
-  let saving = $state(false);
+  $effect(() => {
+    Promise.resolve(data.matchs).then(m => { matchs = m ?? []; dataLoaded = true; });
+  });
 
   let filtered = $derived((() => {
     const upcoming = matchs
@@ -40,8 +44,10 @@
     return [...upcoming, ...finished];
   })());
 
-  let totalPages = $derived(Math.max(1, Math.ceil(filtered.length / PER_PAGE)));
-  let paginated  = $derived(filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE));
+  let totalPages   = $derived(Math.max(1, Math.ceil(filtered.length / PER_PAGE)));
+  let paginated    = $derived(filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE));
+  let upcomingCount = $derived(matchs.filter(m => !m.is_finished).length);
+  let finishedCount = $derived(matchs.filter(m => m.is_finished).length);
 
   $effect(() => { statusFilter; page = 1; });
 
@@ -95,9 +101,6 @@
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
   }
-
-  const upcomingCount = $derived(matchs.filter(m => !m.is_finished).length);
-  const finishedCount = $derived(matchs.filter(m => m.is_finished).length);
 </script>
 
 <Topbar title="Matchs">
@@ -126,24 +129,24 @@
       <h3 class="section-title mb-4">Créer un nouveau match</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="label">Date</label>
-          <input type="date" class="input" bind:value={form.date}/>
+          <label class="label" for="match-date">Date</label>
+          <input id="match-date" type="date" class="input" bind:value={form.date}/>
         </div>
         <div>
-          <label class="label">Heure</label>
-          <input type="time" class="input" bind:value={form.time}/>
+          <label class="label" for="match-time">Heure</label>
+          <input id="match-time" type="time" class="input" bind:value={form.time}/>
         </div>
         <div>
-          <label class="label">Adversaire</label>
-          <input type="text" class="input" placeholder="FC Lyon" bind:value={form.opponent}/>
+          <label class="label" for="match-opponent">Adversaire</label>
+          <input id="match-opponent" type="text" class="input" placeholder="FC Lyon" bind:value={form.opponent}/>
         </div>
         <div>
-          <label class="label">Lieu</label>
-          <input type="text" class="input" placeholder="Salle des sports" bind:value={form.location}/>
+          <label class="label" for="match-location">Lieu</label>
+          <input id="match-location" type="text" class="input" placeholder="Salle des sports" bind:value={form.location}/>
         </div>
         <div class="col-span-2">
-          <label class="label">Commentaire</label>
-          <textarea class="input resize-none h-20" placeholder="Informations complémentaires..."
+          <label class="label" for="match-comment">Commentaire</label>
+          <textarea id="match-comment" class="input resize-none h-20" placeholder="Informations complémentaires..."
                     bind:value={form.comment}></textarea>
         </div>
       </div>
@@ -156,113 +159,127 @@
     </div>
   {/if}
 
-  <!-- Filter bar -->
-  <div class="flex items-center gap-2">
-    {#each [
-      { key: 'all',      label: `Tous (${matchs.length})` },
-      { key: 'upcoming', label: `À venir (${upcomingCount})` },
-      { key: 'finished', label: `Terminés (${finishedCount})` },
-    ] as f}
-      <button
-        onclick={() => statusFilter = f.key as typeof statusFilter}
-        class="text-sm px-4 py-2 rounded-xl font-medium transition-all
-               {statusFilter === f.key
-                 ? 'bg-hcc-600 text-white'
-                 : 'bg-white border border-gray-200 text-gray-500 hover:border-hcc-300'}">
-        {f.label}
-      </button>
-    {/each}
-  </div>
-
-  <!-- Liste -->
-  {#if loading}
-    {#each Array(4) as _}
-      <div class="h-20 bg-gray-100 rounded-2xl animate-pulse"></div>
-    {/each}
-  {:else if filtered.length === 0}
-    <div class="card text-center py-16">
-      <p class="text-gray-400">Aucun match trouvé</p>
+  {#if !dataLoaded}
+    <!-- Skeleton initial pendant le streaming -->
+    <div class="flex gap-2">
+      {#each Array(3) as _}
+        <div class="h-9 w-24 bg-gray-100 rounded-xl animate-pulse"></div>
+      {/each}
+    </div>
+    <div class="space-y-3">
+      {#each Array(5) as _}
+        <div class="h-20 bg-gray-50 rounded-2xl border border-gray-100 animate-pulse"></div>
+      {/each}
     </div>
   {:else}
-    <div class="space-y-3">
-      {#each paginated as match}
-        <a
-          href="/dashboard/matchs/{match.id}"
-          class="flex items-center gap-4 p-4 bg-white rounded-2xl border transition-all group
-                 {match.is_finished
-                   ? 'border-gray-100 hover:border-gray-200'
-                   : 'border-gray-100 hover:border-hcc-200 hover:shadow-sm'}">
-
-          <!-- Date box -->
-          <div class="w-14 h-14 rounded-xl flex flex-col items-center justify-center flex-shrink-0
-                      {match.is_finished ? 'bg-gray-50' : 'bg-hcc-50'}">
-            <span class="font-display text-xl leading-none {match.is_finished ? 'text-gray-500' : 'text-hcc-600'}">
-              {new Date(match.date).getDate()}
-            </span>
-            <span class="text-[10px] uppercase tracking-wider {match.is_finished ? 'text-gray-400' : 'text-hcc-400'}">
-              {new Date(match.date).toLocaleDateString('fr-FR', { month: 'short' })}
-            </span>
-          </div>
-
-          <!-- Infos -->
-          <div class="flex-1 min-w-0">
-            <p class="font-semibold {match.is_finished ? 'text-gray-600' : 'text-gray-900'}">
-              HCC vs {match.opponent}
-            </p>
-            <p class="text-sm text-gray-400 capitalize truncate">
-              {formatDate(match.date)} — {match.time?.slice(0, 5)}
-            </p>
-            {#if match.location && !match.is_finished}
-              <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                {match.location}
-              </p>
-            {/if}
-          </div>
-
-          <!-- Right side -->
-          <div class="flex items-center gap-2 flex-shrink-0">
-            {#if match.is_finished}
-              {#if match.score}
-                <span class="font-mono font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-lg text-sm">
-                  {match.score}
-                </span>
-              {:else}
-                <span class="badge bg-gray-100 text-gray-500">Terminé</span>
-              {/if}
-            {:else}
-              <span class="badge bg-blue-50 text-blue-600 border border-blue-100">
-                {match.played_matches?.length ?? 0} inscrits
-              </span>
-              {#if isPlayer}
-                <button
-                  onclick={(e) => { e.preventDefault(); toggleSubscription(match); }}
-                  class="btn-secondary text-xs py-1.5 px-3">
-                  S'inscrire
-                </button>
-              {/if}
-            {/if}
-
-            <svg class="w-4 h-4 text-gray-300 group-hover:text-hcc-500 transition-colors"
-                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-            </svg>
-          </div>
-        </a>
+    <!-- Filter bar -->
+    <div class="flex items-center gap-2">
+      {#each [
+        { key: 'all',      label: `Tous (${matchs.length})` },
+        { key: 'upcoming', label: `À venir (${upcomingCount})` },
+        { key: 'finished', label: `Terminés (${finishedCount})` },
+      ] as f}
+        <button
+          onclick={() => statusFilter = f.key as typeof statusFilter}
+          class="text-sm px-4 py-2 rounded-xl font-medium transition-all
+                 {statusFilter === f.key
+                   ? 'bg-hcc-600 text-white'
+                   : 'bg-white border border-gray-200 text-gray-500 hover:border-hcc-300'}">
+          {f.label}
+        </button>
       {/each}
     </div>
 
-    <!-- Pagination -->
-    {#if filtered.length > PER_PAGE}
-      <div class="flex items-center justify-between gap-4 pt-2">
-        <span class="text-xs text-gray-400">
-          {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} sur {filtered.length}
-        </span>
-        <Pagination {totalPages} currentPage={page} onPageChange={(p) => page = p} />
+    <!-- Liste -->
+    {#if loading}
+      {#each Array(4) as _}
+        <div class="h-20 bg-gray-100 rounded-2xl animate-pulse"></div>
+      {/each}
+    {:else if filtered.length === 0}
+      <div class="card text-center py-16">
+        <p class="text-gray-400">Aucun match trouvé</p>
       </div>
+    {:else}
+      <div class="space-y-3">
+        {#each paginated as match}
+          <a
+            href="/dashboard/matchs/{match.id}"
+            class="flex items-center gap-4 p-4 bg-white rounded-2xl border transition-all group
+                   {match.is_finished
+                     ? 'border-gray-100 hover:border-gray-200'
+                     : 'border-gray-100 hover:border-hcc-200 hover:shadow-sm'}">
+
+            <!-- Date box -->
+            <div class="w-14 h-14 rounded-xl flex flex-col items-center justify-center flex-shrink-0
+                        {match.is_finished ? 'bg-gray-50' : 'bg-hcc-50'}">
+              <span class="font-display text-xl leading-none {match.is_finished ? 'text-gray-500' : 'text-hcc-600'}">
+                {new Date(match.date).getDate()}
+              </span>
+              <span class="text-[10px] uppercase tracking-wider {match.is_finished ? 'text-gray-400' : 'text-hcc-400'}">
+                {new Date(match.date).toLocaleDateString('fr-FR', { month: 'short' })}
+              </span>
+            </div>
+
+            <!-- Infos -->
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold {match.is_finished ? 'text-gray-600' : 'text-gray-900'}">
+                HCC vs {match.opponent}
+              </p>
+              <p class="text-sm text-gray-400 capitalize truncate">
+                {formatDate(match.date)} — {match.time?.slice(0, 5)}
+              </p>
+              {#if match.location && !match.is_finished}
+                <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                  <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  {match.location}
+                </p>
+              {/if}
+            </div>
+
+            <!-- Right side -->
+            <div class="flex items-center gap-2 flex-shrink-0">
+              {#if match.is_finished}
+                {#if match.score}
+                  <span class="font-mono font-semibold text-gray-700 bg-gray-100 px-3 py-1 rounded-lg text-sm">
+                    {match.score}
+                  </span>
+                {:else}
+                  <span class="badge bg-gray-100 text-gray-500">Terminé</span>
+                {/if}
+              {:else}
+                <span class="badge bg-blue-50 text-blue-600 border border-blue-100">
+                  {match.played_matches?.length ?? 0} inscrits
+                </span>
+                {#if isPlayer}
+                  <button
+                    onclick={(e) => { e.preventDefault(); toggleSubscription(match); }}
+                    class="btn-secondary text-xs py-1.5 px-3">
+                    S'inscrire
+                  </button>
+                {/if}
+              {/if}
+
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-hcc-500 transition-colors"
+                   fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+              </svg>
+            </div>
+          </a>
+        {/each}
+      </div>
+
+      <!-- Pagination -->
+      {#if filtered.length > PER_PAGE}
+        <div class="flex items-center justify-between gap-4 pt-2">
+          <span class="text-xs text-gray-400">
+            {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} sur {filtered.length}
+          </span>
+          <Pagination {totalPages} currentPage={page} onPageChange={(p) => page = p} />
+        </div>
+      {/if}
     {/if}
   {/if}
 </div>

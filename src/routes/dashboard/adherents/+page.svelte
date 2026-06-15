@@ -9,10 +9,15 @@
 
   const PER_PAGE = 8;
 
-  let adherents  = $state<Adherent[]>(data.adherents);
+  let adherents  = $state<Adherent[]>([]);
+  let dataLoaded = $state(false);
   let search     = $state('');
   let roleFilter = $state('all');
   let page       = $state(1);
+
+  $effect(() => {
+    Promise.resolve(data.adherents).then(a => { adherents = a ?? []; dataLoaded = true; });
+  });
 
   const roles = ['all', 'admin', 'coach', 'player', 'contributor', 'pending'];
   const roleLabels: Record<string, string> = {
@@ -41,11 +46,7 @@
     filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
   );
 
-  // Reset to page 1 when filters change
-  $effect(() => {
-    search; roleFilter;
-    page = 1;
-  });
+  $effect(() => { search; roleFilter; page = 1; });
 
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -62,7 +63,6 @@
 
   <!-- Filters -->
   <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-    <!-- Search -->
     <div class="relative flex-1 min-w-0">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
            fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -71,8 +71,6 @@
       <input type="text" class="input pl-9" placeholder="Rechercher un adhérent..."
              bind:value={search}/>
     </div>
-
-    <!-- Role filter -->
     <div class="flex gap-1.5 overflow-x-auto pb-0.5 flex-nowrap shrink-0">
       {#each roles as r}
         <button
@@ -87,73 +85,91 @@
     </div>
   </div>
 
-  <!-- Table -->
-  <div class="card p-0 overflow-hidden">
-    <div class="overflow-x-auto">
-    <table class="w-full">
-      <thead>
-        <tr class="border-b border-gray-100">
-          <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Membre</th>
-          <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
-          <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Contact</th>
-          <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Rôle</th>
-          <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Inscription</th>
-          <th class="px-6 py-4"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {#if paginated.length === 0}
-          <tr>
-            <td colspan="6" class="text-center py-16 text-gray-400">Aucun adhérent trouvé</td>
-          </tr>
-        {:else}
-          {#each paginated as adherent}
-            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 bg-gradient-hcc rounded-full flex items-center justify-center flex-shrink-0">
-                    <span class="text-white text-xs font-semibold">
-                      {adherent.first_name[0]}{adherent.last_name[0]}
-                    </span>
-                  </div>
-                  <span class="text-sm font-medium text-gray-900">
-                    {adherent.first_name} {adherent.last_name}
-                  </span>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-500">{adherent.email}</td>
-              <td class="px-6 py-4 text-sm text-gray-500">{adherent.contact}</td>
-              <td class="px-6 py-4">
-                {#if adherent.role}
-                  <span class="{badgeClass[adherent.role ?? ''] ?? 'badge-pending'} capitalize">
-                    {adherent.role}
-                  </span>
-                {:else}
-                  <span class="badge-pending">En attente</span>
-                {/if}
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-400">{formatDate(adherent.created_at)}</td>
-              <td class="px-6 py-4">
-                <a href="/dashboard/adherents/{adherent.id}"
-                   class="text-hcc-600 hover:underline text-sm font-medium">
-                  Voir →
-                </a>
-              </td>
-            </tr>
-          {/each}
-        {/if}
-      </tbody>
-    </table>
-    </div>
-
-    <!-- Pagination -->
-    {#if filtered.length > PER_PAGE}
-      <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4">
-        <span class="text-xs text-gray-400">
-          {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} sur {filtered.length}
-        </span>
-        <Pagination {totalPages} currentPage={page} onPageChange={(p) => page = p} />
+  {#if !dataLoaded}
+    <!-- Skeleton initial -->
+    <div class="card p-0 overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100 flex gap-8">
+        {#each Array(5) as _}
+          <div class="h-3 bg-gray-100 rounded animate-pulse flex-1"></div>
+        {/each}
       </div>
-    {/if}
-  </div>
+      {#each Array(6) as _}
+        <div class="flex items-center gap-4 px-6 py-4 border-b border-gray-50">
+          <div class="w-8 h-8 bg-gray-100 rounded-full animate-pulse flex-shrink-0"></div>
+          <div class="flex-1 h-3 bg-gray-100 rounded animate-pulse"></div>
+          <div class="w-32 h-3 bg-gray-100 rounded animate-pulse"></div>
+          <div class="w-20 h-5 bg-gray-100 rounded-full animate-pulse"></div>
+        </div>
+      {/each}
+    </div>
+  {:else}
+    <!-- Table -->
+    <div class="card p-0 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-gray-100">
+              <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Membre</th>
+              <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
+              <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Contact</th>
+              <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Rôle</th>
+              <th class="text-left px-6 py-4 text-xs font-medium text-gray-400 uppercase tracking-wider">Inscription</th>
+              <th class="px-6 py-4"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {#if paginated.length === 0}
+              <tr>
+                <td colspan="6" class="text-center py-16 text-gray-400">Aucun adhérent trouvé</td>
+              </tr>
+            {:else}
+              {#each paginated as adherent}
+                <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 bg-gradient-hcc rounded-full flex items-center justify-center flex-shrink-0">
+                        <span class="text-white text-xs font-semibold">
+                          {adherent.first_name[0]}{adherent.last_name[0]}
+                        </span>
+                      </div>
+                      <span class="text-sm font-medium text-gray-900">
+                        {adherent.first_name} {adherent.last_name}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{adherent.email}</td>
+                  <td class="px-6 py-4 text-sm text-gray-500">{adherent.contact}</td>
+                  <td class="px-6 py-4">
+                    {#if adherent.role}
+                      <span class="{badgeClass[adherent.role ?? ''] ?? 'badge-pending'} capitalize">
+                        {adherent.role}
+                      </span>
+                    {:else}
+                      <span class="badge-pending">En attente</span>
+                    {/if}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-400">{formatDate(adherent.created_at)}</td>
+                  <td class="px-6 py-4">
+                    <a href="/dashboard/adherents/{adherent.id}"
+                       class="text-hcc-600 hover:underline text-sm font-medium">
+                      Voir →
+                    </a>
+                  </td>
+                </tr>
+              {/each}
+            {/if}
+          </tbody>
+        </table>
+      </div>
+
+      {#if filtered.length > PER_PAGE}
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4">
+          <span class="text-xs text-gray-400">
+            {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} sur {filtered.length}
+          </span>
+          <Pagination {totalPages} currentPage={page} onPageChange={(p) => page = p} />
+        </div>
+      {/if}
+    </div>
+  {/if}
 </div>

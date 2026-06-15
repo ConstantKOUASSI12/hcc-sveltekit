@@ -3,11 +3,13 @@ import type { PageServerLoad } from './$types';
 import { flaskGet } from '$lib/server/flask';
 import type { News } from '$lib/types';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = ({ locals, setHeaders }) => {
   const user  = locals.user as Record<string, unknown> | null;
   const token = (user?.flask_access_token as string) ?? null;
 
-  const articles = await flaskGet<News[]>('/api/news/', token);
+  setHeaders({ 'cache-control': 'private, max-age=60' });
 
-  return { articles: articles ?? [] };
+  return {
+    articles: flaskGet<News[]>('/api/news/', token),
+  };
 };
